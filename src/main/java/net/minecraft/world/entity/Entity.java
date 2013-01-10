@@ -136,6 +136,7 @@ import org.bukkit.craftbukkit.event.CraftPortalEvent;
 import org.bukkit.entity.Hanging;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Vehicle;
+import org.spigotmc.CustomTimingsHandler; // Spigot
 import org.bukkit.event.entity.EntityCombustByEntityEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.vehicle.VehicleBlockCollisionEvent;
@@ -308,6 +309,7 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
     public boolean lastDamageCancelled; // SPIGOT-5339, SPIGOT-6252, SPIGOT-6777: Keep track if the event was canceled
     public boolean persistentInvisibility = false;
     public BlockPosition lastLavaContact;
+    public CustomTimingsHandler tickTimer = org.bukkit.craftbukkit.SpigotTimings.getEntityTimings(this); // Spigot
 
     public float getBukkitYaw() {
         return this.yRot;
@@ -785,6 +787,7 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
     }
 
     public void move(EnumMoveType enummovetype, Vec3D vec3d) {
+        org.bukkit.craftbukkit.SpigotTimings.entityMoveTimer.startTiming(); // Spigot
         if (this.noPhysics) {
             this.setPos(this.getX() + vec3d.x, this.getY() + vec3d.y, this.getZ() + vec3d.z);
         } else {
@@ -945,6 +948,7 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
                 this.level().getProfiler().pop();
             }
         }
+        org.bukkit.craftbukkit.SpigotTimings.entityMoveTimer.stopTiming(); // Spigot
     }
 
     private boolean isStateClimbable(IBlockData iblockdata) {

@@ -146,11 +146,13 @@ public class ChunkProviderServer extends IChunkProvider {
             }
 
             gameprofilerfiller.incrementCounter("getChunkCacheMiss");
+            level.timings.syncChunkLoadTimer.startTiming(); // Spigot
             CompletableFuture<Either<IChunkAccess, PlayerChunk.Failure>> completablefuture = this.getChunkFutureMainThread(i, j, chunkstatus, flag);
             ChunkProviderServer.b chunkproviderserver_b = this.mainThreadProcessor;
 
             Objects.requireNonNull(completablefuture);
             chunkproviderserver_b.managedBlock(completablefuture::isDone);
+            level.timings.syncChunkLoadTimer.stopTiming(); // Spigot
             ichunkaccess = (IChunkAccess) ((Either) completablefuture.join()).map((ichunkaccess1) -> {
                 return ichunkaccess1;
             }, (playerchunk_failure) -> {
@@ -376,15 +378,19 @@ public class ChunkProviderServer extends IChunkProvider {
     @Override
     public void tick(BooleanSupplier booleansupplier, boolean flag) {
         this.level.getProfiler().push("purge");
+        this.level.timings.doChunkMap.startTiming(); // Spigot
         this.distanceManager.purgeStaleTickets();
         this.runDistanceManagerUpdates();
+        this.level.timings.doChunkMap.stopTiming(); // Spigot
         this.level.getProfiler().popPush("chunks");
         if (flag) {
             this.tickChunks();
         }
 
+        this.level.timings.doChunkUnload.startTiming(); // Spigot
         this.level.getProfiler().popPush("unload");
         this.chunkMap.tick(booleansupplier);
+        this.level.timings.doChunkUnload.stopTiming(); // Spigot
         this.level.getProfiler().pop();
         this.clearCache();
     }
@@ -442,7 +448,9 @@ public class ChunkProviderServer extends IChunkProvider {
                     }
 
                     if (this.level.shouldTickBlocksAt(chunkcoordintpair.toLong())) {
+                        this.level.timings.doTickTiles.startTiming(); // Spigot
                         this.level.tickChunk(chunk1, k);
+                        this.level.timings.doTickTiles.stopTiming(); // Spigot
                     }
                 }
             }
@@ -458,7 +466,9 @@ public class ChunkProviderServer extends IChunkProvider {
             });
             gameprofilerfiller.pop();
             gameprofilerfiller.pop();
+            this.level.timings.tracker.startTiming(); // Spigot
             this.chunkMap.tick();
+            this.level.timings.tracker.stopTiming(); // Spigot
         }
     }
 

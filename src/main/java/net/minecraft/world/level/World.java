@@ -88,6 +88,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.CraftServer;
 import org.bukkit.craftbukkit.CraftWorld;
+import org.bukkit.craftbukkit.SpigotTimings; // Spigot
 import org.bukkit.craftbukkit.block.CapturedBlockState;
 import org.bukkit.craftbukkit.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.util.CraftSpawnCategory;
@@ -154,6 +155,8 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     public final it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap<SpawnCategory> ticksPerSpawnCategory = new it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap<>();
     public boolean populating;
     public final org.spigotmc.SpigotWorldConfig spigotConfig; // Spigot
+
+    public final SpigotTimings.WorldTimingsHandler timings; // Spigot
 
     public CraftWorld getWorld() {
         return this.world;
@@ -246,6 +249,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
             public void onBorderSetDamageSafeZOne(WorldBorder worldborder, double d0) {}
         });
         // CraftBukkit end
+        timings = new SpigotTimings.WorldTimingsHandler(this); // Spigot - code below can generate new world and access timings
     }
 
     @Override
@@ -618,12 +622,15 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         GameProfilerFiller gameprofilerfiller = this.getProfiler();
 
         gameprofilerfiller.push("blockEntities");
+        timings.tileEntityPending.startTiming(); // Spigot
         this.tickingBlockEntities = true;
         if (!this.pendingBlockEntityTickers.isEmpty()) {
             this.blockEntityTickers.addAll(this.pendingBlockEntityTickers);
             this.pendingBlockEntityTickers.clear();
         }
+        timings.tileEntityPending.stopTiming(); // Spigot
 
+        timings.tileEntityTick.startTiming(); // Spigot
         Iterator iterator = this.blockEntityTickers.iterator();
 
         while (iterator.hasNext()) {
@@ -636,13 +643,16 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
             }
         }
 
+        timings.tileEntityTick.stopTiming(); // Spigot
         this.tickingBlockEntities = false;
         gameprofilerfiller.pop();
     }
 
     public <T extends Entity> void guardEntityTick(Consumer<T> consumer, T t0) {
         try {
+            SpigotTimings.tickEntityTimer.startTiming(); // Spigot
             consumer.accept(t0);
+            SpigotTimings.tickEntityTimer.stopTiming(); // Spigot
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Ticking entity");
             CrashReportSystemDetails crashreportsystemdetails = crashreport.addCategory("Entity being ticked");
