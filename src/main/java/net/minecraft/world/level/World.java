@@ -635,6 +635,13 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
 
         while (iterator.hasNext()) {
             TickingBlockEntity tickingblockentity = (TickingBlockEntity) iterator.next();
+            // Spigot start
+            if (tickingblockentity == null) {
+                getCraftServer().getLogger().severe("Spigot has detected a null entity and has removed it, preventing a crash");
+                iterator.remove();
+                continue;
+            }
+            // Spigot end
 
             if (tickingblockentity.isRemoved()) {
                 iterator.remove();
