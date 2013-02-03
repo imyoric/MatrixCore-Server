@@ -418,6 +418,7 @@ public class WorldServer extends World implements GeneratorAccessSeed {
                 gameprofilerfiller.pop();
             }
 
+            org.spigotmc.ActivationRange.activateEntities(this); // Spigot
             timings.entityTick.startTiming(); // Spigot
             this.entityTickList.forEach((entity) -> {
                 if (!entity.isRemoved()) {
@@ -845,6 +846,13 @@ public class WorldServer extends World implements GeneratorAccessSeed {
     }
 
     public void tickNonPassenger(Entity entity) {
+        // Spigot start
+        if (!org.spigotmc.ActivationRange.checkIfActive(entity)) {
+            entity.tickCount++;
+            entity.inactiveTick();
+            return;
+        }
+        // Spigot end
         entity.tickTimer.startTiming(); // Spigot
         entity.setOldPosAndRot();
         GameProfilerFiller gameprofilerfiller = this.getProfiler();
