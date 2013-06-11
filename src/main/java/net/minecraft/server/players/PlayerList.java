@@ -759,6 +759,11 @@ public abstract class PlayerList {
             Player respawnPlayer = entityplayer1.getBukkitEntity();
             PlayerRespawnEvent respawnEvent = new PlayerRespawnEvent(respawnPlayer, location, isBedSpawn && !flag2, flag2, reason);
             cserver.getPluginManager().callEvent(respawnEvent);
+            // Spigot Start
+            if (entityplayer.connection.isDisconnected()) {
+                return entityplayer;
+            }
+            // Spigot End
 
             location = respawnEvent.getRespawnLocation();
             if (!flag) entityplayer.reset(); // SPIGOT-4785
