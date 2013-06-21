@@ -1104,6 +1104,17 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
     }
 
     boolean anyPlayerCloseEnoughForSpawning(ChunkCoordIntPair chunkcoordintpair) {
+        // Spigot start
+        return anyPlayerCloseEnoughForSpawning(chunkcoordintpair, false);
+    }
+
+    boolean anyPlayerCloseEnoughForSpawning(ChunkCoordIntPair chunkcoordintpair, boolean reducedRange) {
+        int chunkRange = level.spigotConfig.mobSpawnRange;
+        chunkRange = (chunkRange > level.spigotConfig.viewDistance) ? (byte) level.spigotConfig.viewDistance : chunkRange;
+        chunkRange = (chunkRange > 8) ? 8 : chunkRange;
+
+        double blockRange = (reducedRange) ? Math.pow(chunkRange << 4, 2) : 16384.0D;
+        // Spigot end
         long i = chunkcoordintpair.toLong();
 
         if (!this.distanceManager.hasPlayersNearby(i)) {
@@ -1119,7 +1130,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
                 }
 
                 entityplayer = (EntityPlayer) iterator.next();
-            } while (!this.playerIsCloseEnoughForSpawning(entityplayer, chunkcoordintpair));
+            } while (!this.playerIsCloseEnoughForSpawning(entityplayer, chunkcoordintpair, blockRange)); // Spigot
 
             return true;
         }
@@ -1137,7 +1148,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
             while (iterator.hasNext()) {
                 EntityPlayer entityplayer = (EntityPlayer) iterator.next();
 
-                if (this.playerIsCloseEnoughForSpawning(entityplayer, chunkcoordintpair)) {
+                if (this.playerIsCloseEnoughForSpawning(entityplayer, chunkcoordintpair, 16384.0D)) { // Spigot
                     builder.add(entityplayer);
                 }
             }
@@ -1146,13 +1157,13 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
         }
     }
 
-    private boolean playerIsCloseEnoughForSpawning(EntityPlayer entityplayer, ChunkCoordIntPair chunkcoordintpair) {
+    private boolean playerIsCloseEnoughForSpawning(EntityPlayer entityplayer, ChunkCoordIntPair chunkcoordintpair, double range) { // Spigot
         if (entityplayer.isSpectator()) {
             return false;
         } else {
             double d0 = euclideanDistanceSquared(chunkcoordintpair, entityplayer);
 
-            return d0 < 16384.0D;
+            return d0 < range; // Spigot
         }
     }
 
