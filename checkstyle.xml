@@ -25,6 +25,9 @@
         <property name="checks" value="UnusedImports"/>
         <property name="files" value=".*[/\\]net[/\\]minecraft[/\\]server[/\\].*"/>
     </module>
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="LeftCurly|ParenPad"/>
+    </module>
 
     <module name="TreeWalker">
         <!-- See https://checkstyle.org/config_javadoc.html -->
@@ -45,6 +48,13 @@
         </module>
         <module name="SuppressWithNearbyCommentFilter">
             <property name="commentFormat" value="CraftBukkit"/>
+        </module>
+        <module name="SuppressionCommentFilter">
+            <property name="offCommentFormat" value="Spigot start"/>
+            <property name="onCommentFormat" value="Spigot end"/>
+        </module>
+        <module name="SuppressWithNearbyCommentFilter">
+            <property name="commentFormat" value="Spigot"/>
         </module>
 
         <!-- See http://checkstyle.sourceforge.net/config_imports.html -->
