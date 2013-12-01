@@ -23,7 +23,7 @@ public class PacketHandshakingInSetProtocol implements Packet<PacketHandshakingI
 
     public PacketHandshakingInSetProtocol(PacketDataSerializer packetdataserializer) {
         this.protocolVersion = packetdataserializer.readVarInt();
-        this.hostName = packetdataserializer.readUtf(255);
+        this.hostName = packetdataserializer.readUtf(Short.MAX_VALUE); // Spigot
         this.port = packetdataserializer.readUnsignedShort();
         this.intention = EnumProtocol.getById(packetdataserializer.readVarInt());
     }

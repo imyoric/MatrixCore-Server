@@ -2059,7 +2059,7 @@ public class PlayerConnection implements ServerPlayerConnection, TickablePacketL
 
                         String message = String.format(queueEvent.getFormat(), queueEvent.getPlayer().getDisplayName(), queueEvent.getMessage());
                         if (((LazyPlayerSet) queueEvent.getRecipients()).isLazy()) {
-                            if (originalFormat.equals(queueEvent.getFormat()) && originalMessage.equals(queueEvent.getMessage()) && queueEvent.getPlayer().getName().equalsIgnoreCase(queueEvent.getPlayer().getDisplayName())) {
+                            if (!org.spigotmc.SpigotConfig.bungee && originalFormat.equals(queueEvent.getFormat()) && originalMessage.equals(queueEvent.getMessage()) && queueEvent.getPlayer().getName().equalsIgnoreCase(queueEvent.getPlayer().getDisplayName())) { // Spigot
                                 PlayerConnection.this.server.getPlayerList().broadcastChatMessage(original, PlayerConnection.this.player, ChatMessageType.bind(ChatMessageType.CHAT, (Entity) PlayerConnection.this.player));
                                 return null;
                             }
@@ -2095,7 +2095,7 @@ public class PlayerConnection implements ServerPlayerConnection, TickablePacketL
 
                 s = String.format(event.getFormat(), event.getPlayer().getDisplayName(), event.getMessage());
                 if (((LazyPlayerSet) event.getRecipients()).isLazy()) {
-                    if (originalFormat.equals(event.getFormat()) && originalMessage.equals(event.getMessage()) && event.getPlayer().getName().equalsIgnoreCase(event.getPlayer().getDisplayName())) {
+                    if (!org.spigotmc.SpigotConfig.bungee && originalFormat.equals(event.getFormat()) && originalMessage.equals(event.getMessage()) && event.getPlayer().getName().equalsIgnoreCase(event.getPlayer().getDisplayName())) { // Spigot
                         PlayerConnection.this.server.getPlayerList().broadcastChatMessage(original, PlayerConnection.this.player, ChatMessageType.bind(ChatMessageType.CHAT, (Entity) PlayerConnection.this.player));
                         return;
                     }
@@ -2351,6 +2351,13 @@ public class PlayerConnection implements ServerPlayerConnection, TickablePacketL
     public SocketAddress getRemoteAddress() {
         return this.connection.getRemoteAddress();
     }
+
+    // Spigot Start
+    public SocketAddress getRawAddress()
+    {
+        return this.connection.channel.remoteAddress();
+    }
+    // Spigot End
 
     @Override
     public void handleInteract(PacketPlayInUseEntity packetplayinuseentity) {

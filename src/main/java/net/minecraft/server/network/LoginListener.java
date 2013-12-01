@@ -115,7 +115,25 @@ public class LoginListener implements PacketLoginInListener, TickablePacketListe
     // Spigot start
     public void initUUID()
     {
-        this.gameProfile = this.createFakeProfile(this.gameProfile);
+        UUID uuid;
+        if ( connection.spoofedUUID != null )
+        {
+            uuid = connection.spoofedUUID;
+        } else
+        {
+            uuid = UUIDUtil.createOfflinePlayerUUID( this.gameProfile.getName() );
+        }
+
+        this.gameProfile = new GameProfile( uuid, this.gameProfile.getName() );
+
+        if (connection.spoofedProfile != null)
+        {
+            for ( com.mojang.authlib.properties.Property property : connection.spoofedProfile )
+            {
+                if ( !HandshakeListener.PROP_PATTERN.matcher( property.getName() ).matches() ) continue;
+                this.gameProfile.getProperties().put( property.getName(), property );
+            }
+        }
     }
 
     public void handleAcceptedLogin() {
