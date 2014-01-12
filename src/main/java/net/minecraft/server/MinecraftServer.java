@@ -1269,7 +1269,14 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
                 worldserver.tick(booleansupplier);
                 worldserver.timings.doTick.stopTiming(); // Spigot
             } catch (Throwable throwable) {
-                CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception ticking world");
+                // Spigot Start
+                CrashReport crashreport;
+                try {
+                    crashreport = CrashReport.forThrowable(throwable, "Exception ticking world");
+                } catch (Throwable t) {
+                    throw new RuntimeException("Error generating crash report", t);
+                }
+                // Spigot End
 
                 worldserver.fillReportDetails(crashreport);
                 throw new ReportedException(crashreport);
