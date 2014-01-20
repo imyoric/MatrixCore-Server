@@ -16,6 +16,7 @@ public class NBTTagByteArray extends NBTList<NBTTagByte> {
         public NBTTagByteArray load(DataInput datainput, int i, NBTReadLimiter nbtreadlimiter) throws IOException {
             nbtreadlimiter.accountBytes(24L);
             int j = datainput.readInt();
+            com.google.common.base.Preconditions.checkArgument( j < 1 << 24); // Spigot
 
             nbtreadlimiter.accountBytes(1L * (long) j);
             byte[] abyte = new byte[j];
