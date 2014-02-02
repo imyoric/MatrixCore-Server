@@ -151,6 +151,12 @@ public abstract class MobSpawnerAbstract {
                             if (mobspawnerdata.getEntityToSpawn().size() == 1 && mobspawnerdata.getEntityToSpawn().contains("id", 8)) {
                                 ((EntityInsentient) entity).finalizeSpawn(worldserver, worldserver.getCurrentDifficultyAt(entity.blockPosition()), EnumMobSpawn.SPAWNER, (GroupDataEntity) null, (NBTTagCompound) null);
                             }
+                            // Spigot Start
+                            if ( entityinsentient.level().spigotConfig.nerfSpawnerMobs )
+                            {
+                                entityinsentient.aware = false;
+                            }
+                            // Spigot End
                         }
 
                         // CraftBukkit start
