@@ -341,7 +341,7 @@ public class CommandListenerWrapper implements ICompletionProvider {
             }
         }
 
-        if (this.source != this.server && this.server.getGameRules().getBoolean(GameRules.RULE_LOGADMINCOMMANDS)) {
+        if (this.source != this.server && this.server.getGameRules().getBoolean(GameRules.RULE_LOGADMINCOMMANDS) && !org.spigotmc.SpigotConfig.silentCommandBlocks) { // Spigot
             this.server.sendSystemMessage(ichatmutablecomponent);
         }
 
