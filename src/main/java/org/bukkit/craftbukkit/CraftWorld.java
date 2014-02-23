@@ -1947,6 +1947,27 @@ public class CraftWorld extends CraftRegionAccessor implements World {
     // Spigot start
     private final org.bukkit.World.Spigot spigot = new org.bukkit.World.Spigot()
     {
+
+        @Override
+        public LightningStrike strikeLightning(Location loc, boolean isSilent)
+        {
+            EntityLightning lightning = EntityTypes.LIGHTNING_BOLT.create( world );
+            lightning.moveTo( loc.getX(), loc.getY(), loc.getZ() );
+            lightning.isSilent = isSilent;
+            world.strikeLightning( lightning, LightningStrikeEvent.Cause.CUSTOM );
+            return (LightningStrike) lightning.getBukkitEntity();
+        }
+
+        @Override
+        public LightningStrike strikeLightningEffect(Location loc, boolean isSilent)
+        {
+            EntityLightning lightning = EntityTypes.LIGHTNING_BOLT.create( world );
+            lightning.moveTo( loc.getX(), loc.getY(), loc.getZ() );
+            lightning.visualOnly = true;
+            lightning.isSilent = isSilent;
+            world.strikeLightning( lightning, LightningStrikeEvent.Cause.CUSTOM );
+            return (LightningStrike) lightning.getBukkitEntity();
+        }
     };
 
     public org.bukkit.World.Spigot spigot()

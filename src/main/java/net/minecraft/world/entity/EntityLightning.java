@@ -46,6 +46,7 @@ public class EntityLightning extends Entity {
     private EntityPlayer cause;
     private final Set<Entity> hitEntities = Sets.newHashSet();
     private int blocksSetOnFire;
+    public boolean isSilent = false; // Spigot
 
     public EntityLightning(EntityTypes<? extends EntityLightning> entitytypes, World world) {
         super(entitytypes, world);
@@ -86,7 +87,7 @@ public class EntityLightning extends Entity {
     @Override
     public void tick() {
         super.tick();
-        if (this.life == 2) {
+        if (!isSilent && this.life == 2) { // Spigot
             if (this.level().isClientSide()) {
                 this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), SoundEffects.LIGHTNING_BOLT_THUNDER, SoundCategory.WEATHER, 10000.0F, 0.8F + this.random.nextFloat() * 0.2F, false);
                 this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), SoundEffects.LIGHTNING_BOLT_IMPACT, SoundCategory.WEATHER, 2.0F, 0.5F + this.random.nextFloat() * 0.2F, false);
