@@ -1052,6 +1052,7 @@ public class WorldServer extends World implements GeneratorAccessSeed {
 
     // CraftBukkit start
     private boolean addEntity(Entity entity, CreatureSpawnEvent.SpawnReason spawnReason) {
+        org.spigotmc.AsyncCatcher.catchOp("entity add"); // Spigot
         if (entity.isRemoved()) {
             // WorldServer.LOGGER.warn("Tried to add entity {} but it was marked as removed already", EntityTypes.getKey(entity.getType())); // CraftBukkit
             return false;
@@ -1859,6 +1860,7 @@ public class WorldServer extends World implements GeneratorAccessSeed {
 
     @Override
     public LevelEntityGetter<Entity> getEntities() {
+        org.spigotmc.AsyncCatcher.catchOp("Chunk getEntities call"); // Spigot
         return this.entityManager.getEntityGetter();
     }
 
@@ -1945,6 +1947,7 @@ public class WorldServer extends World implements GeneratorAccessSeed {
         }
 
         public void onTrackingStart(Entity entity) {
+            org.spigotmc.AsyncCatcher.catchOp("entity register"); // Spigot
             WorldServer.this.getChunkSource().addEntity(entity);
             if (entity instanceof EntityPlayer) {
                 EntityPlayer entityplayer = (EntityPlayer) entity;
@@ -1982,6 +1985,7 @@ public class WorldServer extends World implements GeneratorAccessSeed {
         }
 
         public void onTrackingEnd(Entity entity) {
+            org.spigotmc.AsyncCatcher.catchOp("entity unregister"); // Spigot
             WorldServer.this.getChunkSource().removeEntity(entity);
             if (entity instanceof EntityPlayer) {
                 EntityPlayer entityplayer = (EntityPlayer) entity;
