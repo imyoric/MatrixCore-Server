@@ -235,6 +235,19 @@ public abstract class PlayerList {
             s1 = networkmanager.getRemoteAddress().toString();
         }
 
+        // Spigot start - spawn location event
+        Player spawnPlayer = entityplayer.getBukkitEntity();
+        org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(spawnPlayer, spawnPlayer.getLocation());
+        cserver.getPluginManager().callEvent(ev);
+
+        Location loc = ev.getSpawnLocation();
+        worldserver1 = ((CraftWorld) loc.getWorld()).getHandle();
+
+        entityplayer.spawnIn(worldserver1);
+        entityplayer.gameMode.setLevel((WorldServer) entityplayer.level());
+        entityplayer.absMoveTo(loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch());
+        // Spigot end
+
         // CraftBukkit - Moved message to after join
         // PlayerList.LOGGER.info("{}[{}] logged in with entity id {} at ({}, {}, {})", new Object[]{entityplayer.getName().getString(), s1, entityplayer.getId(), entityplayer.getX(), entityplayer.getY(), entityplayer.getZ()});
         WorldData worlddata = worldserver1.getLevelData();
