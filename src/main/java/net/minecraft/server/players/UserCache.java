@@ -152,7 +152,7 @@ public class UserCache {
             usercache_usercacheentry.setLastAccess(this.getNextOperation());
             optional = Optional.of(usercache_usercacheentry.getProfile());
         } else {
-            optional = lookupGameProfile(this.profileRepository, s1);
+            optional = lookupGameProfile(this.profileRepository, s); // Spigot - use correct case for offline players
             if (optional.isPresent()) {
                 this.add((GameProfile) optional.get());
                 flag = false;
