@@ -11,6 +11,7 @@ public class PacketPlayInUseItem implements Packet<PacketListenerPlayIn> {
     private final MovingObjectPositionBlock blockHit;
     private final EnumHand hand;
     private final int sequence;
+    public long timestamp; // Spigot
 
     public PacketPlayInUseItem(EnumHand enumhand, MovingObjectPositionBlock movingobjectpositionblock, int i) {
         this.hand = enumhand;
@@ -19,6 +20,7 @@ public class PacketPlayInUseItem implements Packet<PacketListenerPlayIn> {
     }
 
     public PacketPlayInUseItem(PacketDataSerializer packetdataserializer) {
+        this.timestamp = System.currentTimeMillis(); // Spigot
         this.hand = (EnumHand) packetdataserializer.readEnum(EnumHand.class);
         this.blockHit = packetdataserializer.readBlockHitResult();
         this.sequence = packetdataserializer.readVarInt();

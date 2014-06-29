@@ -9,6 +9,7 @@ public class PacketPlayInBlockPlace implements Packet<PacketListenerPlayIn> {
 
     private final EnumHand hand;
     private final int sequence;
+    public long timestamp; // Spigot
 
     public PacketPlayInBlockPlace(EnumHand enumhand, int i) {
         this.hand = enumhand;
@@ -16,6 +17,7 @@ public class PacketPlayInBlockPlace implements Packet<PacketListenerPlayIn> {
     }
 
     public PacketPlayInBlockPlace(PacketDataSerializer packetdataserializer) {
+        this.timestamp = System.currentTimeMillis(); // Spigot
         this.hand = (EnumHand) packetdataserializer.readEnum(EnumHand.class);
         this.sequence = packetdataserializer.readVarInt();
     }
