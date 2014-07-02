@@ -672,6 +672,10 @@ public class PacketDataSerializer extends ByteBuf {
             NBTTagCompound nbttagcompound = null;
 
             if (item.canBeDepleted() || item.shouldOverrideMultiplayerNbt()) {
+                // Spigot start - filter
+                itemstack = itemstack.copy();
+                CraftItemStack.setItemMeta(itemstack, CraftItemStack.getItemMeta(itemstack));
+                // Spigot end
                 nbttagcompound = itemstack.getTag();
             }
 
