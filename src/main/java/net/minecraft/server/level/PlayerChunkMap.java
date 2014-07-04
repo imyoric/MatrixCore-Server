@@ -212,7 +212,7 @@ public class PlayerChunkMap extends IChunkLoader implements PlayerChunk.d {
             this.randomState = RandomState.create(GeneratorSettingBase.dummy(), (HolderGetter) iregistrycustom.lookupOrThrow(Registries.NOISE), j);
         }
 
-        this.chunkGeneratorState = chunkgenerator.createState(iregistrycustom.lookupOrThrow(Registries.STRUCTURE_SET), this.randomState, j);
+        this.chunkGeneratorState = chunkgenerator.createState(iregistrycustom.lookupOrThrow(Registries.STRUCTURE_SET), this.randomState, j, worldserver.spigotConfig); // Spigot
         this.mainThreadExecutor = iasynctaskhandler;
         ThreadedMailbox<Runnable> threadedmailbox = ThreadedMailbox.create(executor, "worldgen");
 

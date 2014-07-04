@@ -102,8 +102,8 @@ public abstract class ChunkGenerator {
 
     protected abstract Codec<? extends ChunkGenerator> codec();
 
-    public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> holderlookup, RandomState randomstate, long i) {
-        return ChunkGeneratorStructureState.createForNormal(randomstate, i, this.biomeSource, holderlookup);
+    public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> holderlookup, RandomState randomstate, long i, org.spigotmc.SpigotWorldConfig conf) { // Spigot
+        return ChunkGeneratorStructureState.createForNormal(randomstate, i, this.biomeSource, holderlookup, conf); // Spigot
     }
 
     public Optional<ResourceKey<Codec<? extends ChunkGenerator>>> getTypeNameForDataFixer() {
