@@ -1671,8 +1671,14 @@ public final class CraftServer implements Server {
 
         OfflinePlayer result = getPlayerExact(name);
         if (result == null) {
-            // This is potentially blocking :(
-            GameProfile profile = console.getProfileCache().get(name).orElse(null);
+            // Spigot Start
+            GameProfile profile = null;
+            // Only fetch an online UUID in online mode
+            if ( getOnlineMode() || org.spigotmc.SpigotConfig.bungee )
+            {
+                profile = console.getProfileCache().get(name).orElse(null);
+            }
+            // Spigot end
             if (profile == null) {
                 // Make an OfflinePlayer using an offline mode UUID since the name has no profile
                 result = getOfflinePlayer(new GameProfile(UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(Charsets.UTF_8)), name));
