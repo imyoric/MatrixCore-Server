@@ -158,6 +158,9 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
 
     public final SpigotTimings.WorldTimingsHandler timings; // Spigot
     public static BlockPosition lastPhysicsProblem; // Spigot
+    private org.spigotmc.TickLimiter entityLimiter;
+    private org.spigotmc.TickLimiter tileLimiter;
+    private int tileTickPosition;
 
     public CraftWorld getWorld() {
         return this.world;
@@ -251,6 +254,8 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         });
         // CraftBukkit end
         timings = new SpigotTimings.WorldTimingsHandler(this); // Spigot - code below can generate new world and access timings
+        this.entityLimiter = new org.spigotmc.TickLimiter(spigotConfig.entityMaxTickTime);
+        this.tileLimiter = new org.spigotmc.TickLimiter(spigotConfig.tileMaxTickTime);
     }
 
     @Override
@@ -638,20 +643,28 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         timings.tileEntityPending.stopTiming(); // Spigot
 
         timings.tileEntityTick.startTiming(); // Spigot
-        Iterator iterator = this.blockEntityTickers.iterator();
-
-        while (iterator.hasNext()) {
-            TickingBlockEntity tickingblockentity = (TickingBlockEntity) iterator.next();
+        // Spigot start
+        // Iterator iterator = this.blockEntityTickers.iterator();
+        int tilesThisCycle = 0;
+        for (tileLimiter.initTick();
+                tilesThisCycle < blockEntityTickers.size() && (tilesThisCycle % 10 != 0 || tileLimiter.shouldContinue());
+                tileTickPosition++, tilesThisCycle++) {
+            tileTickPosition = (tileTickPosition < blockEntityTickers.size()) ? tileTickPosition : 0;
+            TickingBlockEntity tickingblockentity = (TickingBlockEntity) this.blockEntityTickers.get(tileTickPosition);
             // Spigot start
             if (tickingblockentity == null) {
                 getCraftServer().getLogger().severe("Spigot has detected a null entity and has removed it, preventing a crash");
-                iterator.remove();
+                tilesThisCycle--;
+                this.blockEntityTickers.remove(tileTickPosition--);
                 continue;
             }
             // Spigot end
 
             if (tickingblockentity.isRemoved()) {
-                iterator.remove();
+                // Spigot start
+                tilesThisCycle--;
+                this.blockEntityTickers.remove(tileTickPosition--);
+                // Spigot end
             } else if (this.shouldTickBlocksAt(tickingblockentity.getPos())) {
                 tickingblockentity.tick();
             }
