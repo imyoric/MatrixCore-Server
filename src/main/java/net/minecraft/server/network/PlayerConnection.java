@@ -1820,7 +1820,7 @@ public class PlayerConnection implements ServerPlayerConnection, TickablePacketL
 
     public void send(Packet<?> packet, @Nullable PacketSendListener packetsendlistener) {
         // CraftBukkit start
-        if (packet == null) {
+        if (packet == null || this.processedDisconnect) { // Spigot
             return;
         } else if (packet instanceof PacketPlayOutSpawnPosition) {
             PacketPlayOutSpawnPosition packet6 = (PacketPlayOutSpawnPosition) packet;
