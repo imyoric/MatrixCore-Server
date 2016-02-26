@@ -2323,6 +2323,16 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
                     }
                 }
                 // CraftBukkit end
+                // Spigot start
+                org.spigotmc.event.entity.EntityMountEvent event = new org.spigotmc.event.entity.EntityMountEvent(this.getBukkitEntity(), entity.getBukkitEntity());
+                // Suppress during worldgen
+                if (this.valid) {
+                    Bukkit.getPluginManager().callEvent(event);
+                }
+                if (event.isCancelled()) {
+                    return false;
+                }
+                // Spigot end
                 if (this.isPassenger()) {
                     this.stopRiding();
                 }
@@ -2414,6 +2424,16 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
                 }
             }
             // CraftBukkit end
+            // Spigot start
+            org.spigotmc.event.entity.EntityDismountEvent event = new org.spigotmc.event.entity.EntityDismountEvent(entity.getBukkitEntity(), this.getBukkitEntity());
+            // Suppress during worldgen
+            if (this.valid) {
+                Bukkit.getPluginManager().callEvent(event);
+            }
+            if (event.isCancelled()) {
+                return false;
+            }
+            // Spigot end
             if (this.passengers.size() == 1 && this.passengers.get(0) == entity) {
                 this.passengers = ImmutableList.of();
             } else {
