@@ -2923,7 +2923,7 @@ public class PlayerConnection implements ServerPlayerConnection, TickablePacketL
 
             NBTTagCompound nbttagcompound = ItemBlock.getBlockEntityData(itemstack);
 
-            if (!itemstack.isEmpty() && nbttagcompound != null && nbttagcompound.contains("x") && nbttagcompound.contains("y") && nbttagcompound.contains("z")) {
+            if (!itemstack.isEmpty() && nbttagcompound != null && nbttagcompound.contains("x") && nbttagcompound.contains("y") && nbttagcompound.contains("z") && this.player.getBukkitEntity().hasPermission("minecraft.nbt.copy")) { // Spigot
                 BlockPosition blockposition = TileEntity.getPosFromTag(nbttagcompound);
 
                 if (this.player.level().isLoaded(blockposition)) {
