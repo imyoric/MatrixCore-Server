@@ -370,6 +370,7 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
         this.entityData.define(Entity.DATA_POSE, EntityPose.STANDING);
         this.entityData.define(Entity.DATA_TICKS_FROZEN, 0);
         this.defineSynchedData();
+        this.getEntityData().registrationLocked = true; // Spigot
         this.setPos(0.0D, 0.0D, 0.0D);
         this.eyeHeight = this.getEyeHeight(EntityPose.STANDING, this.dimensions);
     }

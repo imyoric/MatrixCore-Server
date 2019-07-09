@@ -36,7 +36,7 @@ public class DataWatcher {
     private static final int MAX_ID_VALUE = 254;
     private final Entity entity;
     private final Int2ObjectMap<DataWatcher.Item<?>> itemsById = new Int2ObjectOpenHashMap();
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    // private final ReadWriteLock lock = new ReentrantReadWriteLock(); // Spigot - not required
     private boolean isDirty;
 
     public DataWatcher(Entity entity) {
@@ -83,7 +83,9 @@ public class DataWatcher {
         }
     }
 
+    public boolean registrationLocked; // Spigot
     public <T> void define(DataWatcherObject<T> datawatcherobject, T t0) {
+        if (this.registrationLocked) throw new IllegalStateException("Registering datawatcher object after entity initialization"); // Spigot
         int i = datawatcherobject.getId();
 
         if (i > 254) {
@@ -102,9 +104,9 @@ public class DataWatcher {
     private <T> void createDataItem(DataWatcherObject<T> datawatcherobject, T t0) {
         DataWatcher.Item<T> datawatcher_item = new DataWatcher.Item<>(datawatcherobject, t0);
 
-        this.lock.writeLock().lock();
+        // this.lock.writeLock().lock(); // Spigot - not required
         this.itemsById.put(datawatcherobject.getId(), datawatcher_item);
-        this.lock.writeLock().unlock();
+        // this.lock.writeLock().unlock(); // Spigot - not required
     }
 
     public <T> boolean hasItem(DataWatcherObject<T> datawatcherobject) {
@@ -112,6 +114,8 @@ public class DataWatcher {
     }
 
     private <T> DataWatcher.Item<T> getItem(DataWatcherObject<T> datawatcherobject) {
+        // Spigot start
+        /*
         this.lock.readLock().lock();
 
         DataWatcher.Item datawatcher_item;
@@ -129,6 +133,9 @@ public class DataWatcher {
         }
 
         return datawatcher_item;
+        */
+        return (DataWatcher.Item) this.itemsById.get(datawatcherobject.getId());
+        // Spigot end
     }
 
     public <T> T get(DataWatcherObject<T> datawatcherobject) {
@@ -167,7 +174,7 @@ public class DataWatcher {
         List<DataWatcher.b<?>> list = null;
 
         if (this.isDirty) {
-            this.lock.readLock().lock();
+            // this.lock.readLock().lock(); // Spigot - not required
             ObjectIterator objectiterator = this.itemsById.values().iterator();
 
             while (objectiterator.hasNext()) {
@@ -183,7 +190,7 @@ public class DataWatcher {
                 }
             }
 
-            this.lock.readLock().unlock();
+            // this.lock.readLock().unlock(); // Spigot - not required
         }
 
         this.isDirty = false;
@@ -194,7 +201,7 @@ public class DataWatcher {
     public List<DataWatcher.b<?>> getNonDefaultValues() {
         List<DataWatcher.b<?>> list = null;
 
-        this.lock.readLock().lock();
+        // this.lock.readLock().lock(); // Spigot - not required
         ObjectIterator objectiterator = this.itemsById.values().iterator();
 
         while (objectiterator.hasNext()) {
@@ -209,12 +216,12 @@ public class DataWatcher {
             }
         }
 
-        this.lock.readLock().unlock();
+        // this.lock.readLock().unlock(); // Spigot - not required
         return list;
     }
 
     public void assignValues(List<DataWatcher.b<?>> list) {
-        this.lock.writeLock().lock();
+        // this.lock.writeLock().lock(); // Spigot - not required
 
         try {
             Iterator iterator = list.iterator();
@@ -229,7 +236,7 @@ public class DataWatcher {
                 }
             }
         } finally {
-            this.lock.writeLock().unlock();
+            // this.lock.writeLock().unlock(); // Spigot - not required
         }
 
         this.entity.onSyncedDataUpdated(list);
