@@ -511,7 +511,7 @@ public class WorldServer extends World implements GeneratorAccessSeed {
         gameprofilerfiller.push("thunder");
         BlockPosition blockposition;
 
-        if (flag && this.isThundering() && this.random.nextInt(100000) == 0) {
+        if (flag && this.isThundering() && this.spigotConfig.thunderChance > 0 && this.random.nextInt(this.spigotConfig.thunderChance) == 0) { // Spigot
             blockposition = this.findLightningTargetAround(this.getBlockRandomPos(j, 0, k, 15));
             if (this.isRainingAt(blockposition)) {
                 DifficultyDamageScaler difficultydamagescaler = this.getCurrentDifficultyAt(blockposition);
