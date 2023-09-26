@@ -65,7 +65,7 @@ public class CraftScheduler implements BukkitScheduler {
      */
     private final AtomicInteger ids = new AtomicInteger(START_ID);
     /**
-     * Current head of linked-list. This reference is always stale, {@link CraftTask#next} is the live reference.
+     * Current head of linked-list. This reference is always stale, is the live reference.
      */
     private volatile CraftTask head = new CraftTask();
     /**
