@@ -39,6 +39,7 @@ import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.boss.EntityComplexPart;
 import net.minecraft.world.entity.boss.enderdragon.EntityEnderDragon;
+import net.minecraft.world.entity.item.EntityTNTPrimed;
 import net.minecraft.world.entity.player.EntityHuman;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingManager;
@@ -127,7 +128,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     public final RandomSource random = RandomSource.create();
     /** @deprecated */
     @Deprecated
-    private final RandomSource threadSafeRandom = RandomSource.createThreadSafe();
+    public final RandomSource threadSafeRandom = RandomSource.createThreadSafe();
     private final ResourceKey<DimensionManager> dimensionTypeId;
     private final Holder<DimensionManager> dimensionTypeRegistration;
     public final WorldDataMutable levelData;
@@ -740,9 +741,20 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
 
         Explosion.Effect explosion_effect1 = explosion_effect;
         Explosion explosion = new Explosion(this, entity, damagesource, explosiondamagecalculator, d0, d1, d2, f, flag, explosion_effect1);
-
-        explosion.explode();
-        explosion.finalizeExplosion(flag1);
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                explosion.explode();
+                explosion.finalizeExplosion(flag1);
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(entity == null) return;
+                        entity.discard();
+                    }
+                });
+            }
+        });
         return explosion;
     }
 
@@ -856,8 +868,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     public List<Entity> getEntities(@Nullable Entity entity, AxisAlignedBB axisalignedbb, Predicate<? super Entity> predicate) {
         this.getProfiler().incrementCounter("getEntities");
         List<Entity> list = Lists.newArrayList();
-
-        this.getEntities().get(axisalignedbb, (entity1) -> {
+        getEntities().get(axisalignedbb, (entity1) -> {
             if (entity1 != entity && predicate.test(entity1)) {
                 list.add(entity1);
             }
@@ -876,6 +887,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
             }
 
         });
+
         return list;
     }
 

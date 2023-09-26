@@ -25,11 +25,12 @@ public class EntityLargeFireball extends EntityFireballFireball {
         this.explosionPower = i;
         isIncendiary = this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING); // CraftBukkit
     }
+    boolean isExploded = false;
 
     @Override
     protected void onHit(MovingObjectPosition movingobjectposition) {
         super.onHit(movingobjectposition);
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide && !isExploded) {
             boolean flag = this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING);
 
             // CraftBukkit start - fire ExplosionPrimeEvent
@@ -39,6 +40,7 @@ public class EntityLargeFireball extends EntityFireballFireball {
             if (!event.isCancelled()) {
                 // give 'this' instead of (Entity) null so we know what causes the damage
                 this.level().explode(this, this.getX(), this.getY(), this.getZ(), event.getRadius(), event.getFire(), World.a.MOB);
+                isExploded = true;
             }
             // CraftBukkit end
             this.discard();

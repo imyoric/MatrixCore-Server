@@ -111,8 +111,11 @@ public class EntityMinecartTNT extends EntityMinecartAbstract {
         this.explode((DamageSource) null, d0);
     }
 
+    boolean isExploded = false;
+
     protected void explode(@Nullable DamageSource damagesource, double d0) {
-        if (!this.level().isClientSide) {
+
+        if (!this.level().isClientSide && !isExploded) {
             double d1 = Math.sqrt(d0);
 
             if (d1 > 5.0D) {
@@ -126,6 +129,8 @@ public class EntityMinecartTNT extends EntityMinecartAbstract {
                 fuse = -1;
                 return;
             }
+
+            isExploded = true;
             this.level().explode(this, damagesource, (ExplosionDamageCalculator) null, this.getX(), this.getY(), this.getZ(), event.getRadius(), event.getFire(), World.a.TNT);
             // CraftBukkit end
             this.discard();

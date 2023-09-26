@@ -106,6 +106,7 @@ import net.minecraft.world.phys.Vec3D;
 import net.minecraft.world.scores.ScoreboardObjective;
 import net.minecraft.world.scores.ScoreboardTeam;
 import net.minecraft.world.scores.ScoreboardTeamBase;
+import org.bukkit.Bukkit;
 import org.slf4j.Logger;
 
 // CraftBukkit start
@@ -870,7 +871,6 @@ public abstract class PlayerList {
             // CraftBukkit end
             this.sendAllPlayerInfoIn = 0;
         }
-
     }
 
     public void broadcastAll(Packet<?> packet) {

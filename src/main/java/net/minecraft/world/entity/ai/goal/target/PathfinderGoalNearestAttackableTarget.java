@@ -10,6 +10,7 @@ import net.minecraft.world.entity.ai.goal.PathfinderGoal;
 import net.minecraft.world.entity.ai.targeting.PathfinderTargetCondition;
 import net.minecraft.world.entity.player.EntityHuman;
 import net.minecraft.world.phys.AxisAlignedBB;
+import org.bukkit.Bukkit;
 
 public class PathfinderGoalNearestAttackableTarget<T extends EntityLiving> extends PathfinderGoalTarget {
 
@@ -55,19 +56,23 @@ public class PathfinderGoalNearestAttackableTarget<T extends EntityLiving> exten
     }
 
     protected void findTarget() {
-        if (this.targetType != EntityHuman.class && this.targetType != EntityPlayer.class) {
-            this.target = this.mob.level().getNearestEntity(this.mob.level().getEntitiesOfClass(this.targetType, this.getTargetSearchArea(this.getFollowDistance()), (entityliving) -> {
-                return true;
-            }), this.targetConditions, this.mob, this.mob.getX(), this.mob.getEyeY(), this.mob.getZ());
-        } else {
-            this.target = this.mob.level().getNearestPlayer(this.targetConditions, this.mob, this.mob.getX(), this.mob.getEyeY(), this.mob.getZ());
-        }
-
+        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (targetType != EntityHuman.class && targetType != EntityPlayer.class) {
+                    target = mob.level().getNearestEntity(mob.level().getEntitiesOfClass(targetType, getTargetSearchArea(getFollowDistance()), (entityliving) -> {
+                        return true;
+                    }), targetConditions, mob, mob.getX(), mob.getEyeY(), mob.getZ());
+                } else {
+                    target = mob.level().getNearestPlayer(targetConditions, mob, mob.getX(), mob.getEyeY(), mob.getZ());
+                }
+            }
+        });
     }
 
     @Override
     public void start() {
-        this.mob.setTarget(this.target, target instanceof EntityPlayer ? org.bukkit.event.entity.EntityTargetEvent.TargetReason.CLOSEST_PLAYER : org.bukkit.event.entity.EntityTargetEvent.TargetReason.CLOSEST_ENTITY, true); // CraftBukkit - reason
+        mob.setTarget(this.target, target instanceof EntityPlayer ? org.bukkit.event.entity.EntityTargetEvent.TargetReason.CLOSEST_PLAYER : org.bukkit.event.entity.EntityTargetEvent.TargetReason.CLOSEST_ENTITY, true); // CraftBukkit - reason
         super.start();
     }
 

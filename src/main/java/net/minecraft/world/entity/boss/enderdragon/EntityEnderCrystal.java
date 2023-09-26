@@ -96,13 +96,15 @@ public class EntityEnderCrystal extends Entity {
         return true;
     }
 
+    boolean isExploded = false;
+
     @Override
     public boolean hurt(DamageSource damagesource, float f) {
         if (this.isInvulnerableTo(damagesource)) {
             return false;
         } else if (damagesource.getEntity() instanceof EntityEnderDragon) {
             return false;
-        } else {
+        } else if(!isExploded) {
             if (!this.isRemoved() && !this.level().isClientSide) {
                 // CraftBukkit start - All non-living entities need this
                 if (CraftEventFactory.handleNonLivingEntityDamageEvent(this, damagesource, f, false)) {
@@ -119,6 +121,8 @@ public class EntityEnderCrystal extends Entity {
                         this.unsetRemoved();
                         return false;
                     }
+
+                    isExploded = true;
                     this.level().explode(this, damagesource1, (ExplosionDamageCalculator) null, this.getX(), this.getY(), this.getZ(), event.getRadius(), event.getFire(), World.a.BLOCK);
                     // CraftBukkit end
                 }
@@ -128,6 +132,7 @@ public class EntityEnderCrystal extends Entity {
 
             return true;
         }
+        return false;
     }
 
     @Override

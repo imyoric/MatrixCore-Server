@@ -70,6 +70,7 @@ public class BlockBed extends BlockFacingHorizontal implements ITileEntity {
 
         return iblockdata.getBlock() instanceof BlockBed ? (EnumDirection) iblockdata.getValue(BlockBed.FACING) : null;
     }
+    boolean isExploded = false;
 
     @Override
     public EnumInteractionResult use(IBlockData iblockdata, World world, BlockPosition blockposition, EntityHuman entityhuman, EnumHand enumhand, MovingObjectPositionBlock movingobjectpositionblock) {
@@ -86,6 +87,7 @@ public class BlockBed extends BlockFacingHorizontal implements ITileEntity {
 
             // CraftBukkit - moved world and biome check into EntityHuman
             if (false && !canSetSpawn(world)) {
+                if(isExploded) return EnumInteractionResult.PASS;
                 world.removeBlock(blockposition, false);
                 BlockPosition blockposition1 = blockposition.relative(((EnumDirection) iblockdata.getValue(BlockBed.FACING)).getOpposite());
 
@@ -96,6 +98,7 @@ public class BlockBed extends BlockFacingHorizontal implements ITileEntity {
                 Vec3D vec3d = blockposition.getCenter();
 
                 world.explode((Entity) null, world.damageSources().badRespawnPointExplosion(vec3d), (ExplosionDamageCalculator) null, vec3d, 5.0F, true, World.a.BLOCK);
+                isExploded = true;
                 return EnumInteractionResult.SUCCESS;
             } else if ((Boolean) iblockdata.getValue(BlockBed.OCCUPIED)) {
                 if (!this.kickVillagerOutOfBed(world, blockposition)) {
@@ -127,7 +130,7 @@ public class BlockBed extends BlockFacingHorizontal implements ITileEntity {
     // CraftBukkit start
     private EnumInteractionResult explodeBed(IBlockData iblockdata, World world, BlockPosition blockposition) {
         {
-            {
+            if(!isExploded){
                 world.removeBlock(blockposition, false);
                 BlockPosition blockposition1 = blockposition.relative(((EnumDirection) iblockdata.getValue(BlockBed.FACING)).getOpposite());
 
@@ -137,9 +140,10 @@ public class BlockBed extends BlockFacingHorizontal implements ITileEntity {
 
                 Vec3D vec3d = blockposition.getCenter();
 
+                isExploded = true;
                 world.explode((Entity) null, world.damageSources().badRespawnPointExplosion(vec3d), (ExplosionDamageCalculator) null, vec3d, 5.0F, true, World.a.BLOCK);
                 return EnumInteractionResult.SUCCESS;
-            }
+            }else return EnumInteractionResult.PASS;
         }
     }
     // CraftBukkit end

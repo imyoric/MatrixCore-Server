@@ -30,6 +30,7 @@ import net.minecraft.util.CSVWriter;
 import net.minecraft.util.VisibleForDebug;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkCoordIntPair;
+import org.bukkit.Bukkit;
 import org.slf4j.Logger;
 
 // CraftBukkit start
@@ -489,27 +490,33 @@ public class PersistentEntitySectionManager<T extends EntityAccess> implements A
 
         @Override
         public void onRemove(Entity.RemovalReason entity_removalreason) {
-            if (!this.currentSection.remove(this.entity)) {
-                PersistentEntitySectionManager.LOGGER.warn("Entity {} wasn't found in section {} (destroying due to {})", new Object[]{this.entity, SectionPosition.of(this.currentSectionKey), entity_removalreason});
-            }
+            Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                @Override
+                public void run() {
+                    if (!currentSection.remove(entity)) {
+                        PersistentEntitySectionManager.LOGGER.warn("Entity {} wasn't found in section {} (destroying due to {})", new Object[]{entity, SectionPosition.of(currentSectionKey), entity_removalreason});
+                    }
 
-            Visibility visibility = PersistentEntitySectionManager.getEffectiveStatus(this.entity, this.currentSection.getStatus());
+                    Visibility visibility = PersistentEntitySectionManager.getEffectiveStatus(entity, currentSection.getStatus());
 
-            if (visibility.isTicking()) {
-                PersistentEntitySectionManager.this.stopTicking(this.entity);
-            }
+                    if (visibility.isTicking()) {
+                        stopTicking(entity);
+                    }
 
-            if (visibility.isAccessible()) {
-                PersistentEntitySectionManager.this.stopTracking(this.entity);
-            }
+                    if (visibility.isAccessible()) {
+                        stopTracking(entity);
+                    }
 
-            if (entity_removalreason.shouldDestroy()) {
-                PersistentEntitySectionManager.this.callbacks.onDestroyed(this.entity);
-            }
+                    if (entity_removalreason.shouldDestroy()) {
+                        callbacks.onDestroyed(entity);
+                    }
 
-            PersistentEntitySectionManager.this.knownUuids.remove(this.entity.getUUID());
-            this.entity.setLevelCallback(PersistentEntitySectionManager.a.NULL);
-            PersistentEntitySectionManager.this.removeSectionIfEmpty(this.currentSectionKey, this.currentSection);
+                    knownUuids.remove(entity.getUUID());
+                    entity.setLevelCallback(PersistentEntitySectionManager.a.NULL);
+                    removeSectionIfEmpty(currentSectionKey, currentSection);
+                }
+            }, true);
+
         }
     }
 }

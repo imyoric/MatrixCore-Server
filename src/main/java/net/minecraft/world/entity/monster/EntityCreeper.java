@@ -263,8 +263,10 @@ public class EntityCreeper extends EntityMonster implements PowerableMob {
         }
     }
 
+    boolean isExploded = false;
+
     public void explodeCreeper() {
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide && !isExploded) {
             float f = this.isPowered() ? 2.0F : 1.0F;
 
             // CraftBukkit start
@@ -272,6 +274,7 @@ public class EntityCreeper extends EntityMonster implements PowerableMob {
             if (!event.isCancelled()) {
             // CraftBukkit end
             this.dead = true;
+            isExploded = true;
             this.level().explode(this, this.getX(), this.getY(), this.getZ(), event.getRadius(), event.getFire(), World.a.MOB); // CraftBukkit
             this.discard();
             this.spawnLingeringCloud();

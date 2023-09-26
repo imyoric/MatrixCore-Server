@@ -155,6 +155,7 @@ import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.EntityPoseChangeEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.PluginManager;
+import ru.yoricya.minecraft.matrixcore.MatrixCore;
 // CraftBukkit end
 
 public abstract class Entity implements INamableTileEntity, EntityAccess, ICommandListener {
@@ -1571,11 +1572,11 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
         BlockPosition blockposition = this.getOnPosLegacy();
         IBlockData iblockdata = this.level().getBlockState(blockposition);
 
-        if (iblockdata.getRenderShape() != EnumRenderType.INVISIBLE) {
-            Vec3D vec3d = this.getDeltaMovement();
-            BlockPosition blockposition1 = this.blockPosition();
-            double d0 = this.getX() + (this.random.nextDouble() - 0.5D) * (double) this.dimensions.width;
-            double d1 = this.getZ() + (this.random.nextDouble() - 0.5D) * (double) this.dimensions.width;
+        if (iblockdata.getRenderShape() != EnumRenderType.INVISIBLE){
+            Vec3D vec3d = getDeltaMovement();
+            BlockPosition blockposition1 = blockPosition();
+            double d0 = getX() + (random.nextDouble() - 0.5D) * (double) dimensions.width;
+            double d1 = getZ() + (random.nextDouble() - 0.5D) * (double) dimensions.width;
 
             if (blockposition1.getX() != blockposition.getX()) {
                 d0 = MathHelper.clamp(d0, (double) blockposition.getX(), (double) blockposition.getX() + 1.0D);
@@ -1585,9 +1586,10 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
                 d1 = MathHelper.clamp(d1, (double) blockposition.getZ(), (double) blockposition.getZ() + 1.0D);
             }
 
-            this.level().addParticle(new ParticleParamBlock(Particles.BLOCK, iblockdata), d0, this.getY() + 0.1D, d1, vec3d.x * -4.0D, 1.5D, vec3d.z * -4.0D);
+            double finalD = d0;
+            double finalD1 = d1;
+            level().addParticle(new ParticleParamBlock(Particles.BLOCK, iblockdata), finalD, getY() + 0.1D, finalD1, vec3d.x * -4.0D, 1.5D, vec3d.z * -4.0D);
         }
-
     }
 
     public boolean isEyeInFluid(TagKey<FluidType> tagkey) {
@@ -1599,9 +1601,8 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
     }
 
     public void moveRelative(float f, Vec3D vec3d) {
-        Vec3D vec3d1 = getInputVector(vec3d, f, this.getYRot());
-
-        this.setDeltaMovement(this.getDeltaMovement().add(vec3d1));
+        Vec3D vec3d1 = getInputVector(vec3d, f, getYRot());
+        setDeltaMovement(getDeltaMovement().add(vec3d1));
     }
 
     private static Vec3D getInputVector(Vec3D vec3d, float f, float f1) {
@@ -1625,42 +1626,45 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
     }
 
     public void absMoveTo(double d0, double d1, double d2, float f, float f1) {
-        this.absMoveTo(d0, d1, d2);
-        this.setYRot(f % 360.0F);
-        this.setXRot(MathHelper.clamp(f1, -90.0F, 90.0F) % 360.0F);
-        this.yRotO = this.getYRot();
-        this.xRotO = this.getXRot();
+        absMoveTo(d0, d1, d2);
+        setYRot(f % 360.0F);
+        setXRot(MathHelper.clamp(f1, -90.0F, 90.0F) % 360.0F);
+        yRotO = getYRot();
+        xRotO = getXRot();
     }
 
     public void absMoveTo(double d0, double d1, double d2) {
         double d3 = MathHelper.clamp(d0, -3.0E7D, 3.0E7D);
         double d4 = MathHelper.clamp(d2, -3.0E7D, 3.0E7D);
 
-        this.xo = d3;
-        this.yo = d1;
-        this.zo = d4;
-        this.setPos(d3, d1, d4);
-        if (valid) level.getChunk((int) Math.floor(this.getX()) >> 4, (int) Math.floor(this.getZ()) >> 4); // CraftBukkit
+        xo = d3;
+        yo = d1;
+        zo = d4;
+        setPos(d3, d1, d4);
+
+        int i = (int) Math.floor(getX()) >> 4;
+        int j = (int) Math.floor(getZ()) >> 4;
+
+        if (valid) level.getChunk(i, j); // CraftBukkit
     }
 
     public void moveTo(Vec3D vec3d) {
-        this.moveTo(vec3d.x, vec3d.y, vec3d.z);
+        moveTo(vec3d.x, vec3d.y, vec3d.z);
     }
 
     public void moveTo(double d0, double d1, double d2) {
-        this.moveTo(d0, d1, d2, this.getYRot(), this.getXRot());
+        moveTo(d0, d1, d2, getYRot(), getXRot());
     }
 
     public void moveTo(BlockPosition blockposition, float f, float f1) {
-        this.moveTo((double) blockposition.getX() + 0.5D, (double) blockposition.getY(), (double) blockposition.getZ() + 0.5D, f, f1);
+        moveTo((double) blockposition.getX() + 0.5D, (double) blockposition.getY(), (double) blockposition.getZ() + 0.5D, f, f1);
     }
-
     public void moveTo(double d0, double d1, double d2, float f, float f1) {
-        this.setPosRaw(d0, d1, d2);
-        this.setYRot(f);
-        this.setXRot(f1);
-        this.setOldPosAndRot();
-        this.reapplyPosition();
+        setPosRaw(d0, d1, d2);
+        setYRot(f);
+        setXRot(f1);
+        setOldPosAndRot();
+        reapplyPosition();
     }
 
     public final void setOldPosAndRot() {
@@ -1755,7 +1759,6 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
         if (this.isInvulnerableTo(damagesource)) {
             return false;
         } else {
-            this.markHurt();
             return false;
         }
     }
@@ -2369,7 +2372,6 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
         for (int i = this.passengers.size() - 1; i >= 0; --i) {
             ((Entity) this.passengers.get(i)).stopRiding();
         }
-
     }
 
     public void removeVehicle() {
@@ -3899,15 +3901,15 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
             int j = MathHelper.floor(d1);
             int k = MathHelper.floor(d2);
 
-            if (i != this.blockPosition.getX() || j != this.blockPosition.getY() || k != this.blockPosition.getZ()) {
-                this.blockPosition = new BlockPosition(i, j, k);
-                this.feetBlockState = null;
-                if (SectionPosition.blockToSectionCoord(i) != this.chunkPosition.x || SectionPosition.blockToSectionCoord(k) != this.chunkPosition.z) {
-                    this.chunkPosition = new ChunkCoordIntPair(this.blockPosition);
+            if (i != blockPosition.getX() || j != blockPosition.getY() || k != blockPosition.getZ()) {
+                blockPosition = new BlockPosition(i, j, k);
+                feetBlockState = null;
+                if (SectionPosition.blockToSectionCoord(i) != chunkPosition.x || SectionPosition.blockToSectionCoord(k) != chunkPosition.z) {
+                    chunkPosition = new ChunkCoordIntPair(blockPosition);
                 }
             }
 
-            this.levelCallback.onMove();
+            levelCallback.onMove();
         }
 
     }

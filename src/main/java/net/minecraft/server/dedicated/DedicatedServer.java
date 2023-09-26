@@ -128,7 +128,7 @@ public class DedicatedServer extends MinecraftServer implements IMinecraftServer
                             }
                             continue;
                         }
-                        if (s.trim().length() > 0) { // Trim to filter lines which are just spaces
+                        if (!s.trim().isEmpty()) { // Trim to filter lines which are just spaces
                             DedicatedServer.this.handleConsoleInput(s, DedicatedServer.this.createCommandSourceStack());
                         }
                         // CraftBukkit end

@@ -478,14 +478,11 @@ public class WorldServer extends World implements GeneratorAccessSeed {
     public void setDayTime(long i) {
         this.serverLevelData.setDayTime(i);
     }
+    public WorldServer getThis(){return this;}
 
     public void tickCustomSpawners(boolean flag, boolean flag1) {
-        Iterator iterator = this.customSpawners.iterator();
-
-        while (iterator.hasNext()) {
-            MobSpawner mobspawner = (MobSpawner) iterator.next();
-
-            mobspawner.tick(this, flag, flag1);
+        for (MobSpawner customSpawner : this.customSpawners) {
+            customSpawner.tick(getThis(), flag, flag1);
         }
 
     }
@@ -542,7 +539,7 @@ public class WorldServer extends World implements GeneratorAccessSeed {
         int l;
         int i1;
 
-        if (this.random.nextInt(16) == 0) {
+        if (this.threadSafeRandom.nextInt(16) == 0) {
             blockposition = this.getHeightmapPos(HeightMap.Type.MOTION_BLOCKING, this.getBlockRandomPos(j, 0, k, 15));
             BlockPosition blockposition1 = blockposition.below();
             BiomeBase biomebase = (BiomeBase) this.getBiome(blockposition).value();
@@ -660,27 +657,31 @@ public class WorldServer extends World implements GeneratorAccessSeed {
     }
 
     private void announceSleepStatus() {
-        if (this.canSleepThroughNights()) {
-            if (!this.getServer().isSingleplayer() || this.getServer().isPublished()) {
-                int i = this.getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
-                IChatMutableComponent ichatmutablecomponent;
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (canSleepThroughNights()) {
+                    if (!getServer().isSingleplayer() || getServer().isPublished()) {
+                        int i = getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
+                        IChatMutableComponent ichatmutablecomponent;
 
-                if (this.sleepStatus.areEnoughSleeping(i)) {
-                    ichatmutablecomponent = IChatBaseComponent.translatable("sleep.skipping_night");
-                } else {
-                    ichatmutablecomponent = IChatBaseComponent.translatable("sleep.players_sleeping", this.sleepStatus.amountSleeping(), this.sleepStatus.sleepersNeeded(i));
+                        if (sleepStatus.areEnoughSleeping(i)) {
+                            ichatmutablecomponent = IChatBaseComponent.translatable("sleep.skipping_night");
+                        } else {
+                            ichatmutablecomponent = IChatBaseComponent.translatable("sleep.players_sleeping", sleepStatus.amountSleeping(), sleepStatus.sleepersNeeded(i));
+                        }
+
+                        Iterator iterator = players.iterator();
+
+                        while (iterator.hasNext()) {
+                            EntityPlayer entityplayer = (EntityPlayer) iterator.next();
+
+                            entityplayer.displayClientMessage(ichatmutablecomponent, true);
+                        }
+                    }
                 }
-
-                Iterator iterator = this.players.iterator();
-
-                while (iterator.hasNext()) {
-                    EntityPlayer entityplayer = (EntityPlayer) iterator.next();
-
-                    entityplayer.displayClientMessage(ichatmutablecomponent, true);
-                }
-
             }
-        }
+        });
     }
 
     public void updateSleepingPlayerList() {
@@ -925,17 +926,14 @@ public class WorldServer extends World implements GeneratorAccessSeed {
 
             chunkproviderserver.save(flag);
             if (flag) {
-                this.entityManager.saveAll();
+                entityManager.saveAll();
             } else {
-                this.entityManager.autoSave();
+                entityManager.autoSave();
             }
-
         }
 
         // CraftBukkit start - moved from MinecraftServer.saveChunks
-        WorldServer worldserver1 = this;
-
-        serverLevelData.setWorldBorder(worldserver1.getWorldBorder().createSettings());
+        serverLevelData.setWorldBorder(this.getWorldBorder().createSettings());
         serverLevelData.setCustomBossEvents(this.server.getCustomBossEvents().save());
         convertable.saveDataTag(this.server.registryAccess(), this.serverLevelData, this.server.getPlayerList().getSingleplayerData());
         // CraftBukkit end

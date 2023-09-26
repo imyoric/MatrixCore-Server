@@ -30,7 +30,25 @@ public class TicksPerSecondCommand extends Command
             sb.append( format( tps ) );
             sb.append( ", " );
         }
+
         sender.sendMessage( sb.substring( 0, sb.length() - 2 ) );
+
+        StringBuilder MatrixTicks = new StringBuilder(ChatColor.GOLD+"MatrixAsyncScheduler Ticks:"+ChatColor.YELLOW);
+        int cur = 0;
+        for (int tick: MinecraftServer.getMatrixAsyncSchedulerTicks()){
+            if(tick == -1){
+                MatrixTicks.append(ChatColor.UNDERLINE+""+ChatColor.YELLOW+"Thr").append(ChatColor.UNDERLINE+""+ChatColor.YELLOW+cur).append(ChatColor.UNDERLINE+""+ChatColor.YELLOW+": "+ChatColor.RESET+ChatColor.YELLOW).append("sleep, ");
+                continue;
+            }else if(tick > 1000){
+                MatrixTicks.append(ChatColor.UNDERLINE+""+ChatColor.YELLOW+"Thr").append(""+ChatColor.YELLOW+cur).append(ChatColor.UNDERLINE+""+ChatColor.YELLOW+": "+ChatColor.RESET+ChatColor.YELLOW+ChatColor.UNDERLINE).append(tick/1000).append("SEC"+ChatColor.YELLOW+", ");
+                continue;
+            }
+            if(tick < 0) tick = 0;
+            MatrixTicks.append(ChatColor.UNDERLINE+""+ChatColor.YELLOW+"Thr").append(ChatColor.UNDERLINE+""+ChatColor.YELLOW+cur).append(ChatColor.UNDERLINE+""+ChatColor.YELLOW+": "+ChatColor.RESET+ChatColor.YELLOW).append(tick).append("ms, ");
+            cur++;
+        }
+        sender.sendMessage(MatrixTicks.toString());
+
         sender.sendMessage(ChatColor.GOLD + "Current Memory Usage: " + ChatColor.GREEN + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024)) + "/" + (Runtime.getRuntime().totalMemory() / (1024 * 1024)) + " mb (Max: "
                 + (Runtime.getRuntime().maxMemory() / (1024 * 1024)) + " mb)");
 

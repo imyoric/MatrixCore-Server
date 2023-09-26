@@ -74,6 +74,7 @@ public class EntityWither extends EntityMonster implements PowerableMob, IRanged
     private static final List<DataWatcherObject<Integer>> DATA_TARGETS = ImmutableList.of(EntityWither.DATA_TARGET_A, EntityWither.DATA_TARGET_B, EntityWither.DATA_TARGET_C);
     private static final DataWatcherObject<Integer> DATA_ID_INV = DataWatcher.defineId(EntityWither.class, DataWatcherRegistry.INT);
     private static final int INVULNERABLE_TICKS = 220;
+    boolean isExploded = false;
     private final float[] xRotHeads = new float[2];
     private final float[] yRotHeads = new float[2];
     private final float[] xRotOHeads = new float[2];
@@ -253,6 +254,7 @@ public class EntityWither extends EntityMonster implements PowerableMob, IRanged
 
     @Override
     protected void customServerAiStep() {
+        if(isExploded) return;
         int i;
 
         if (this.getInvulnerableTicks() > 0) {
@@ -264,8 +266,9 @@ public class EntityWither extends EntityMonster implements PowerableMob, IRanged
                 ExplosionPrimeEvent event = new ExplosionPrimeEvent(this.getBukkitEntity(), 7.0F, false);
                 this.level().getCraftServer().getPluginManager().callEvent(event);
 
-                if (!event.isCancelled()) {
+                if (!event.isCancelled() && !isExploded) {
                     this.level().explode(this, this.getX(), this.getEyeY(), this.getZ(), event.getRadius(), event.getFire(), World.a.MOB);
+                    isExploded = true;
                 }
                 // CraftBukkit end
 

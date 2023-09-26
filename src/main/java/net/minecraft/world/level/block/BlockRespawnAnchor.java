@@ -117,8 +117,10 @@ public class BlockRespawnAnchor extends Block {
             }
         }
     }
+    boolean isExploded = false;
 
     private void explode(IBlockData iblockdata, World world, final BlockPosition blockposition) {
+        if(isExploded) return;
         world.removeBlock(blockposition, false);
         Stream<EnumDirection> stream = EnumDirection.EnumDirectionLimit.HORIZONTAL.stream(); // CraftBukkit - decompile error
 
@@ -135,6 +137,7 @@ public class BlockRespawnAnchor extends Block {
         };
         Vec3D vec3d = blockposition.getCenter();
 
+        isExploded = true;
         world.explode((Entity) null, world.damageSources().badRespawnPointExplosion(vec3d), explosiondamagecalculator, vec3d, 5.0F, true, World.a.BLOCK);
     }
 

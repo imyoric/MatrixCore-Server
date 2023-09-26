@@ -116,6 +116,8 @@ import net.minecraft.world.phys.Vec3D;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.ScoreboardTeam;
 import net.minecraft.world.scores.ScoreboardTeamBase;
+import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitTask;
 import org.slf4j.Logger;
 
 // CraftBukkit start
@@ -239,85 +241,121 @@ public abstract class EntityHuman extends EntityLiving {
         this.entityData.define(EntityHuman.DATA_SHOULDER_LEFT, new NBTTagCompound());
         this.entityData.define(EntityHuman.DATA_SHOULDER_RIGHT, new NBTTagCompound());
     }
+    public EntityHuman getThis(){return this;}
 
     @Override
     public void tick() {
-        this.noPhysics = this.isSpectator();
-        if (this.isSpectator()) {
-            this.setOnGround(false);
-        }
-
-        if (this.takeXpDelay > 0) {
-            --this.takeXpDelay;
-        }
-
-        if (this.isSleeping()) {
-            ++this.sleepCounter;
-            if (this.sleepCounter > 100) {
-                this.sleepCounter = 100;
-            }
-
-            if (!this.level().isClientSide && this.level().isDay()) {
-                this.stopSleepInBed(false, true);
-            }
-        } else if (this.sleepCounter > 0) {
-            ++this.sleepCounter;
-            if (this.sleepCounter >= 110) {
-                this.sleepCounter = 0;
-            }
-        }
-
-        this.updateIsUnderwater();
         super.tick();
-        if (!this.level().isClientSide && this.containerMenu != null && !this.containerMenu.stillValid(this)) {
-            this.closeContainer();
-            this.containerMenu = this.inventoryMenu;
-        }
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        noPhysics = isSpectator();
+                        if (isSpectator()) {
+                            setOnGround(false);
+                        }
 
-        this.moveCloak();
-        if (!this.level().isClientSide) {
-            this.foodData.tick(this);
-            this.awardStat(StatisticList.PLAY_TIME);
-            this.awardStat(StatisticList.TOTAL_WORLD_TIME);
-            if (this.isAlive()) {
-                this.awardStat(StatisticList.TIME_SINCE_DEATH);
+                        if (takeXpDelay > 0) {
+                            --takeXpDelay;
+                        }
+
+                        if (isSleeping()) {
+                            ++sleepCounter;
+                            if (sleepCounter > 100) {
+                                sleepCounter = 100;
+                            }
+
+                            if (!level().isClientSide && level().isDay()) {
+                                stopSleepInBed(false, true);
+                            }
+                        } else if (sleepCounter > 0) {
+                            ++sleepCounter;
+                            if (sleepCounter >= 110) {
+                                sleepCounter = 0;
+                            }
+                        }
+
+                        updateIsUnderwater();
+                    }
+                });
+
+
+                moveCloak();
+                if (!level().isClientSide)
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            foodData.tick(getThis());
+                        }
+                    });
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!level().isClientSide) {
+                            awardStat(StatisticList.PLAY_TIME);
+                            awardStat(StatisticList.TOTAL_WORLD_TIME);
+                            if (isAlive()) {
+                                awardStat(StatisticList.TIME_SINCE_DEATH);
+                            }
+
+                            if (isDiscrete()) {
+                                awardStat(StatisticList.CROUCH_TIME);
+                            }
+
+                            if (!isSleeping()) {
+                                awardStat(StatisticList.TIME_SINCE_REST);
+                            }
+                        }
+                    }
+                });
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        double d0 = MathHelper.clamp(getX(), -2.9999999E7D, 2.9999999E7D);
+                        double d1 = MathHelper.clamp(getZ(), -2.9999999E7D, 2.9999999E7D);
+
+                        if (d0 != getX() || d1 != getZ()) {
+                            setPos(d0, getY(), d1);
+                        }
+                    }
+                });
+
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        ++attackStrengthTicker;
+                        ItemStack itemstack = getMainHandItem();
+
+                        if (!ItemStack.matches(lastItemInMainHand, itemstack)) {
+                            if (!ItemStack.isSameItem(lastItemInMainHand, itemstack)) {
+                                resetAttackStrengthTicker();
+                            }
+
+                            lastItemInMainHand = itemstack.copy();
+                        }
+
+                        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                            @Override
+                            public void run() {
+                                turtleHelmetTick();
+                                updatePlayerPose();
+                            }
+                        });
+                        cooldowns.tick();
+                    }
+                });
             }
-
-            if (this.isDiscrete()) {
-                this.awardStat(StatisticList.CROUCH_TIME);
-            }
-
-            if (!this.isSleeping()) {
-                this.awardStat(StatisticList.TIME_SINCE_REST);
-            }
+        });
+        if (!level().isClientSide && containerMenu != null && !containerMenu.stillValid(getThis())) {
+            closeContainer();
+            containerMenu = inventoryMenu;
         }
-
-        int i = 29999999;
-        double d0 = MathHelper.clamp(this.getX(), -2.9999999E7D, 2.9999999E7D);
-        double d1 = MathHelper.clamp(this.getZ(), -2.9999999E7D, 2.9999999E7D);
-
-        if (d0 != this.getX() || d1 != this.getZ()) {
-            this.setPos(d0, this.getY(), d1);
-        }
-
-        ++this.attackStrengthTicker;
-        ItemStack itemstack = this.getMainHandItem();
-
-        if (!ItemStack.matches(this.lastItemInMainHand, itemstack)) {
-            if (!ItemStack.isSameItem(this.lastItemInMainHand, itemstack)) {
-                this.resetAttackStrengthTicker();
-            }
-
-            this.lastItemInMainHand = itemstack.copy();
-        }
-
-        this.turtleHelmetTick();
-        this.cooldowns.tick();
-        this.updatePlayerPose();
     }
 
     public boolean isSecondaryUseActive() {
-        return this.isShiftKeyDown();
+        return isShiftKeyDown();
     }
 
     protected boolean wantsToStopRiding() {
@@ -391,6 +429,7 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     protected void updatePlayerPose() {
+
         if (this.canEnterPose(EntityPose.SWIMMING)) {
             EntityPose entitypose;
 
@@ -419,8 +458,12 @@ public abstract class EntityHuman extends EntityLiving {
             } else {
                 entitypose1 = entitypose;
             }
-
-            this.setPose(entitypose1);
+            Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                @Override
+                public void run() {
+                    setPose(entitypose1);
+                }
+            });
         }
     }
 
@@ -483,14 +526,27 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     private void addParticlesAroundSelf(ParticleParam particleparam) {
-        for (int i = 0; i < 5; ++i) {
-            double d0 = this.random.nextGaussian() * 0.02D;
-            double d1 = this.random.nextGaussian() * 0.02D;
-            double d2 = this.random.nextGaussian() * 0.02D;
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 5; ++i) {
+                    double d0 = random.nextGaussian() * 0.02D;
+                    double d1 = random.nextGaussian() * 0.02D;
+                    double d2 = random.nextGaussian() * 0.02D;
 
-            this.level().addParticle(particleparam, this.getRandomX(1.0D), this.getRandomY() + 1.0D, this.getRandomZ(1.0D), d0, d1, d2);
-        }
+                    double rx = getRandomX(1.0D);
+                    double ry = getRandomY() + 1.0D;
+                    double rz = getRandomZ(1.0D);
 
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            level().addParticle(particleparam, rx, ry, rz, d0, d1, d2);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     public void closeContainer() {
@@ -531,67 +587,100 @@ public abstract class EntityHuman extends EntityLiving {
 
     @Override
     public void aiStep() {
-        if (this.jumpTriggerTime > 0) {
-            --this.jumpTriggerTime;
-        }
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (jumpTriggerTime > 0) {
+                    --jumpTriggerTime;
+                }
 
-        if (this.level().getDifficulty() == EnumDifficulty.PEACEFUL && this.level().getGameRules().getBoolean(GameRules.RULE_NATURAL_REGENERATION)) {
-            if (this.getHealth() < this.getMaxHealth() && this.tickCount % 20 == 0) {
-                // CraftBukkit - added regain reason of "REGEN" for filtering purposes.
-                this.heal(1.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.REGEN);
+                if (level().getDifficulty() == EnumDifficulty.PEACEFUL && level().getGameRules().getBoolean(GameRules.RULE_NATURAL_REGENERATION)) {
+                    if (getHealth() < getMaxHealth() && tickCount % 20 == 0) {
+                        // CraftBukkit - added regain reason of "REGEN" for filtering purposes.
+                        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                            @Override
+                            public void run() {
+                                heal(1.0F, org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason.REGEN);
+                            }
+                        });
+                    }
+
+                    if (foodData.needsFood() && tickCount % 10 == 0) {
+                        foodData.setFoodLevel(foodData.getFoodLevel() + 1);
+                    }
+                }
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        inventory.tick();
+                    }
+                });
+                oBob = bob;
+                setSpeed((float) getAttributeValue(GenericAttributes.MOVEMENT_SPEED));
+                float f;
+
+                if (onGround() && !isDeadOrDying() && !isSwimming()) {
+                    f = Math.min(0.1F, (float) getDeltaMovement().horizontalDistance());
+                } else {
+                    f = 0.0F;
+                }
+
+                bob += (f - bob) * 0.4F;
             }
-
-            if (this.foodData.needsFood() && this.tickCount % 10 == 0) {
-                this.foodData.setFoodLevel(this.foodData.getFoodLevel() + 1);
-            }
-        }
-
-        this.inventory.tick();
-        this.oBob = this.bob;
+        });
         super.aiStep();
-        this.setSpeed((float) this.getAttributeValue(GenericAttributes.MOVEMENT_SPEED));
-        float f;
 
-        if (this.onGround() && !this.isDeadOrDying() && !this.isSwimming()) {
-            f = Math.min(0.1F, (float) this.getDeltaMovement().horizontalDistance());
-        } else {
-            f = 0.0F;
-        }
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (getHealth() > 0.0F && !isSpectator()) {
+                    AxisAlignedBB axisalignedbb;
 
-        this.bob += (f - this.bob) * 0.4F;
-        if (this.getHealth() > 0.0F && !this.isSpectator()) {
-            AxisAlignedBB axisalignedbb;
+                    if (isPassenger() && !getVehicle().isRemoved()) {
+                        axisalignedbb = getBoundingBox().minmax(getVehicle().getBoundingBox()).inflate(1.0D, 0.0D, 1.0D);
+                    } else {
+                        axisalignedbb = getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
+                    }
 
-            if (this.isPassenger() && !this.getVehicle().isRemoved()) {
-                axisalignedbb = this.getBoundingBox().minmax(this.getVehicle().getBoundingBox()).inflate(1.0D, 0.0D, 1.0D);
-            } else {
-                axisalignedbb = this.getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
-            }
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            List<Entity> list = level().getEntities(getThis(), axisalignedbb);
+                            Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                                @Override
+                                public void run() {
+                                    List<Entity> list1 = Lists.newArrayList();
+                                    for (int i = 0; i < list.size(); ++i) {
+                                        Entity entity = (Entity) list.get(i);
 
-            List<Entity> list = this.level().getEntities(this, axisalignedbb);
-            List<Entity> list1 = Lists.newArrayList();
+                                        if (entity.getType() == EntityTypes.EXPERIENCE_ORB) {
+                                            list1.add(entity);
+                                        } else if (!entity.isRemoved()) {
+                                            touch(entity);
+                                        }
+                                    }
 
-            for (int i = 0; i < list.size(); ++i) {
-                Entity entity = (Entity) list.get(i);
-
-                if (entity.getType() == EntityTypes.EXPERIENCE_ORB) {
-                    list1.add(entity);
-                } else if (!entity.isRemoved()) {
-                    this.touch(entity);
+                                    if (!list1.isEmpty()) {
+                                        touch((Entity) SystemUtils.getRandom((List) list1, random));
+                                    }
+                                }
+                            });
+                        }
+                    });
                 }
             }
+        });
 
-            if (!list1.isEmpty()) {
-                this.touch((Entity) SystemUtils.getRandom((List) list1, this.random));
+        playShoulderEntityAmbientSound(getShoulderEntityLeft());
+        playShoulderEntityAmbientSound(getShoulderEntityRight());
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (!level().isClientSide && (fallDistance > 0.5F || isInWater()) || abilities.flying || isSleeping() || isInPowderSnow) {
+                    removeEntitiesOnShoulder();
+                }
             }
-        }
-
-        this.playShoulderEntityAmbientSound(this.getShoulderEntityLeft());
-        this.playShoulderEntityAmbientSound(this.getShoulderEntityRight());
-        if (!this.level().isClientSide && (this.fallDistance > 0.5F || this.isInWater()) || this.abilities.flying || this.isSleeping() || this.isInPowderSnow) {
-            this.removeEntitiesOnShoulder();
-        }
-
+        });
     }
 
     private void playShoulderEntityAmbientSound(@Nullable NBTTagCompound nbttagcompound) {
@@ -604,14 +693,18 @@ public abstract class EntityHuman extends EntityLiving {
                 if (!EntityParrot.imitateNearbyMobs(this.level(), this)) {
                     this.level().playSound((EntityHuman) null, this.getX(), this.getY(), this.getZ(), EntityParrot.getAmbient(this.level(), this.level().random), this.getSoundSource(), 1.0F, EntityParrot.getPitch(this.level().random));
                 }
-
             });
         }
 
     }
 
     private void touch(Entity entity) {
-        entity.playerTouch(this);
+        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                entity.playerTouch(getThis());
+            }
+        });
     }
 
     public int getScore() {
@@ -1439,7 +1532,7 @@ public abstract class EntityHuman extends EntityLiving {
 
     }
 
-    public void respawn() {}
+    public void respawn() {System.out.println("Respawned!");}
 
     @Override
     public void remove(Entity.RemovalReason entity_removalreason) {
@@ -1576,6 +1669,7 @@ public abstract class EntityHuman extends EntityLiving {
 
     @Override
     public void travel(Vec3D vec3d) {
+
         double d0 = this.getX();
         double d1 = this.getY();
         double d2 = this.getZ();
@@ -1585,25 +1679,40 @@ public abstract class EntityHuman extends EntityLiving {
             d3 = this.getLookAngle().y;
             double d4 = d3 < -0.2D ? 0.085D : 0.06D;
 
-            if (d3 <= 0.0D || this.jumping || !this.level().getBlockState(BlockPosition.containing(this.getX(), this.getY() + 1.0D - 0.1D, this.getZ())).getFluidState().isEmpty()) {
-                Vec3D vec3d1 = this.getDeltaMovement();
-
-                this.setDeltaMovement(vec3d1.add(0.0D, (d3 - vec3d1.y) * d4, 0.0D));
-            }
+            double finalD = d3;
+            Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                @Override
+                public void run() {
+                    if (finalD <= 0.0D || jumping || !level().getBlockState(BlockPosition.containing(getX(), getY() + 1.0D - 0.1D, getZ())).getFluidState().isEmpty()) {
+                        Vec3D vec3d1 = getDeltaMovement();
+                        setDeltaMovement(vec3d1.add(0.0D, (finalD - vec3d1.y) * d4, 0.0D));
+                    }
+                }
+            });
         }
 
         if (this.abilities.flying && !this.isPassenger()) {
             d3 = this.getDeltaMovement().y;
             super.travel(vec3d);
-            Vec3D vec3d2 = this.getDeltaMovement();
-
-            this.setDeltaMovement(vec3d2.x, d3 * 0.6D, vec3d2.z);
-            this.resetFallDistance();
-            // CraftBukkit start
-            if (getSharedFlag(7) && !org.bukkit.craftbukkit.event.CraftEventFactory.callToggleGlideEvent(this, false).isCancelled()) {
-                this.setSharedFlag(7, false);
-            }
-            // CraftBukkit end
+            double finalD1 = d3;
+            Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                @Override
+                public void run() {
+                    Vec3D vec3d2 = getDeltaMovement();
+                    setDeltaMovement(vec3d2.x, finalD1 * 0.6D, vec3d2.z);
+                    resetFallDistance();
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            // CraftBukkit start
+                            if (getSharedFlag(7) && !org.bukkit.craftbukkit.event.CraftEventFactory.callToggleGlideEvent(getThis(), false).isCancelled()) {
+                                setSharedFlag(7, false);
+                            }
+                            // CraftBukkit end
+                        }
+                    });
+                }
+            });
         } else {
             super.travel(vec3d);
         }
@@ -1631,56 +1740,61 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void checkMovementStatistics(double d0, double d1, double d2) {
-        if (!this.isPassenger()) {
-            int i;
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (!isPassenger()) {
+                    int i;
 
-            if (this.isSwimming()) {
-                i = Math.round((float) Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2) * 100.0F);
-                if (i > 0) {
-                    this.awardStat(StatisticList.SWIM_ONE_CM, i);
-                    this.causeFoodExhaustion(this.level().spigotConfig.swimMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.SWIM); // CraftBukkit - EntityExhaustionEvent // Spigot
-                }
-            } else if (this.isEyeInFluid(TagsFluid.WATER)) {
-                i = Math.round((float) Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2) * 100.0F);
-                if (i > 0) {
-                    this.awardStat(StatisticList.WALK_UNDER_WATER_ONE_CM, i);
-                    this.causeFoodExhaustion(this.level().spigotConfig.swimMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.WALK_UNDERWATER); // CraftBukkit - EntityExhaustionEvent // Spigot
-                }
-            } else if (this.isInWater()) {
-                i = Math.round((float) Math.sqrt(d0 * d0 + d2 * d2) * 100.0F);
-                if (i > 0) {
-                    this.awardStat(StatisticList.WALK_ON_WATER_ONE_CM, i);
-                    this.causeFoodExhaustion(this.level().spigotConfig.swimMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.WALK_ON_WATER); // CraftBukkit - EntityExhaustionEvent // Spigot
-                }
-            } else if (this.onClimbable()) {
-                if (d1 > 0.0D) {
-                    this.awardStat(StatisticList.CLIMB_ONE_CM, (int) Math.round(d1 * 100.0D));
-                }
-            } else if (this.onGround()) {
-                i = Math.round((float) Math.sqrt(d0 * d0 + d2 * d2) * 100.0F);
-                if (i > 0) {
-                    if (this.isSprinting()) {
-                        this.awardStat(StatisticList.SPRINT_ONE_CM, i);
-                        this.causeFoodExhaustion(this.level().spigotConfig.sprintMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.SPRINT); // CraftBukkit - EntityExhaustionEvent // Spigot
-                    } else if (this.isCrouching()) {
-                        this.awardStat(StatisticList.CROUCH_ONE_CM, i);
-                        this.causeFoodExhaustion(this.level().spigotConfig.otherMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.CROUCH); // CraftBukkit - EntityExhaustionEvent // Spigot
+                    if (isSwimming()) {
+                        i = Math.round((float) Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2) * 100.0F);
+                        if (i > 0) {
+                            awardStat(StatisticList.SWIM_ONE_CM, i);
+                            causeFoodExhaustion(level().spigotConfig.swimMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.SWIM); // CraftBukkit - EntityExhaustionEvent // Spigot
+                        }
+                    } else if (isEyeInFluid(TagsFluid.WATER)) {
+                        i = Math.round((float) Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2) * 100.0F);
+                        if (i > 0) {
+                            awardStat(StatisticList.WALK_UNDER_WATER_ONE_CM, i);
+                            causeFoodExhaustion(level().spigotConfig.swimMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.WALK_UNDERWATER); // CraftBukkit - EntityExhaustionEvent // Spigot
+                        }
+                    } else if (isInWater()) {
+                        i = Math.round((float) Math.sqrt(d0 * d0 + d2 * d2) * 100.0F);
+                        if (i > 0) {
+                            awardStat(StatisticList.WALK_ON_WATER_ONE_CM, i);
+                            causeFoodExhaustion(level().spigotConfig.swimMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.WALK_ON_WATER); // CraftBukkit - EntityExhaustionEvent // Spigot
+                        }
+                    } else if (onClimbable()) {
+                        if (d1 > 0.0D) {
+                            awardStat(StatisticList.CLIMB_ONE_CM, (int) Math.round(d1 * 100.0D));
+                        }
+                    } else if (onGround()) {
+                        i = Math.round((float) Math.sqrt(d0 * d0 + d2 * d2) * 100.0F);
+                        if (i > 0) {
+                            if (isSprinting()) {
+                                awardStat(StatisticList.SPRINT_ONE_CM, i);
+                                causeFoodExhaustion(level().spigotConfig.sprintMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.SPRINT); // CraftBukkit - EntityExhaustionEvent // Spigot
+                            } else if (isCrouching()) {
+                                awardStat(StatisticList.CROUCH_ONE_CM, i);
+                                causeFoodExhaustion(level().spigotConfig.otherMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.CROUCH); // CraftBukkit - EntityExhaustionEvent // Spigot
+                            } else {
+                                awardStat(StatisticList.WALK_ONE_CM, i);
+                                causeFoodExhaustion(level().spigotConfig.otherMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.WALK); // CraftBukkit - EntityExhaustionEvent // Spigot
+                            }
+                        }
+                    } else if (isFallFlying()) {
+                        i = Math.round((float) Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2) * 100.0F);
+                        awardStat(StatisticList.AVIATE_ONE_CM, i);
                     } else {
-                        this.awardStat(StatisticList.WALK_ONE_CM, i);
-                        this.causeFoodExhaustion(this.level().spigotConfig.otherMultiplier * (float) i * 0.01F, EntityExhaustionEvent.ExhaustionReason.WALK); // CraftBukkit - EntityExhaustionEvent // Spigot
+                        i = Math.round((float) Math.sqrt(d0 * d0 + d2 * d2) * 100.0F);
+                        if (i > 25) {
+                            awardStat(StatisticList.FLY_ONE_CM, i);
+                        }
                     }
-                }
-            } else if (this.isFallFlying()) {
-                i = Math.round((float) Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2) * 100.0F);
-                this.awardStat(StatisticList.AVIATE_ONE_CM, i);
-            } else {
-                i = Math.round((float) Math.sqrt(d0 * d0 + d2 * d2) * 100.0F);
-                if (i > 25) {
-                    this.awardStat(StatisticList.FLY_ONE_CM, i);
+
                 }
             }
-
-        }
+        });
     }
 
     private void checkRidingStatistics(double d0, double d1, double d2) {
@@ -1711,9 +1825,12 @@ public abstract class EntityHuman extends EntityLiving {
         if (this.abilities.mayfly) {
             return false;
         } else {
-            if (f >= 2.0F) {
-                this.awardStat(StatisticList.FALL_ONE_CM, (int) Math.round((double) f * 100.0D));
-            }
+            if (f >= 2.0F) Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                @Override
+                public void run() {
+                    awardStat(StatisticList.FALL_ONE_CM, (int) Math.round((double) f * 100.0D));
+                }
+            });
 
             return super.causeFallDamage(f, f1, damagesource);
         }
@@ -1804,28 +1921,32 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void giveExperiencePoints(int i) {
-        this.increaseScore(i);
-        this.experienceProgress += (float) i / (float) this.getXpNeededForNextLevel();
-        this.totalExperience = MathHelper.clamp(this.totalExperience + i, 0, Integer.MAX_VALUE);
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                increaseScore(i);
+                experienceProgress += (float) i / (float) getXpNeededForNextLevel();
+                totalExperience = MathHelper.clamp(totalExperience + i, 0, Integer.MAX_VALUE);
 
-        while (this.experienceProgress < 0.0F) {
-            float f = this.experienceProgress * (float) this.getXpNeededForNextLevel();
+                while (experienceProgress < 0.0F) {
+                    float f = experienceProgress * (float) getXpNeededForNextLevel();
 
-            if (this.experienceLevel > 0) {
-                this.giveExperienceLevels(-1);
-                this.experienceProgress = 1.0F + f / (float) this.getXpNeededForNextLevel();
-            } else {
-                this.giveExperienceLevels(-1);
-                this.experienceProgress = 0.0F;
+                    if (experienceLevel > 0) {
+                        giveExperienceLevels(-1);
+                        experienceProgress = 1.0F + f / (float) getXpNeededForNextLevel();
+                    } else {
+                        giveExperienceLevels(-1);
+                        experienceProgress = 0.0F;
+                    }
+                }
+
+                while (experienceProgress >= 1.0F) {
+                    experienceProgress = (experienceProgress - 1.0F) * (float) getXpNeededForNextLevel();
+                    giveExperienceLevels(1);
+                    experienceProgress /= (float) getXpNeededForNextLevel();
+                }
             }
-        }
-
-        while (this.experienceProgress >= 1.0F) {
-            this.experienceProgress = (this.experienceProgress - 1.0F) * (float) this.getXpNeededForNextLevel();
-            this.giveExperienceLevels(1);
-            this.experienceProgress /= (float) this.getXpNeededForNextLevel();
-        }
-
+        });
     }
 
     public int getEnchantmentSeed() {
@@ -1844,20 +1965,28 @@ public abstract class EntityHuman extends EntityLiving {
     }
 
     public void giveExperienceLevels(int i) {
-        this.experienceLevel += i;
-        if (this.experienceLevel < 0) {
-            this.experienceLevel = 0;
-            this.experienceProgress = 0.0F;
-            this.totalExperience = 0;
-        }
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                experienceLevel += i;
+                if (experienceLevel < 0) {
+                    experienceLevel = 0;
+                    experienceProgress = 0.0F;
+                    totalExperience = 0;
+                }
 
-        if (i > 0 && this.experienceLevel % 5 == 0 && (float) this.lastLevelUpTime < (float) this.tickCount - 100.0F) {
-            float f = this.experienceLevel > 30 ? 1.0F : (float) this.experienceLevel / 30.0F;
-
-            this.level().playSound((EntityHuman) null, this.getX(), this.getY(), this.getZ(), SoundEffects.PLAYER_LEVELUP, this.getSoundSource(), f * 0.75F, 1.0F);
-            this.lastLevelUpTime = this.tickCount;
-        }
-
+                if (i > 0 && experienceLevel % 5 == 0 && (float) lastLevelUpTime < (float) tickCount - 100.0F) {
+                    float f = experienceLevel > 30 ? 1.0F : (float) experienceLevel / 30.0F;
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            level().playSound((EntityHuman) null, getX(), getY(), getZ(), SoundEffects.PLAYER_LEVELUP, getSoundSource(), f * 0.75F, 1.0F);
+                        }
+                    });
+                    lastLevelUpTime = tickCount;
+                }
+            }
+        });
     }
 
     public int getXpNeededForNextLevel() {
@@ -1873,12 +2002,18 @@ public abstract class EntityHuman extends EntityLiving {
         // CraftBukkit end
         if (!this.abilities.invulnerable) {
             if (!this.level().isClientSide) {
-                // CraftBukkit start
-                EntityExhaustionEvent event = CraftEventFactory.callPlayerExhaustionEvent(this, reason, f);
-                if (!event.isCancelled()) {
-                    this.foodData.addExhaustion(event.getExhaustion());
-                }
-                // CraftBukkit end
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        // CraftBukkit start
+                        EntityExhaustionEvent event = CraftEventFactory.callPlayerExhaustionEvent(getThis(), reason, f);
+                        if (!event.isCancelled()) {
+                            foodData.addExhaustion(event.getExhaustion());
+                        }
+                        // CraftBukkit end
+                    }
+                });
+
             }
 
         }

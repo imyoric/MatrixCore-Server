@@ -192,6 +192,7 @@ import org.bukkit.event.server.ServerLoadEvent;
 // CraftBukkit end
 
 import org.bukkit.craftbukkit.SpigotTimings; // Spigot
+import ru.yoricya.minecraft.matrixcore.MatrixCore;
 
 public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTask> implements ICommandListener, AutoCloseable {
 
@@ -580,9 +581,9 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
         }
         this.forceDifficulty();
         for (WorldServer worldserver : this.getAllLevels()) {
-            this.prepareLevels(worldserver.getChunkSource().chunkMap.progressListener, worldserver);
+            prepareLevels(worldserver.getChunkSource().chunkMap.progressListener, worldserver);
             worldserver.entityManager.tick(); // SPIGOT-6526: Load pending entities so they are available to the API
-            this.server.getPluginManager().callEvent(new org.bukkit.event.world.WorldLoadEvent(worldserver.getWorld()));
+            server.getPluginManager().callEvent(new org.bukkit.event.world.WorldLoadEvent(worldserver.getWorld()));
         }
 
         this.server.enablePlugins(org.bukkit.plugin.PluginLoadOrder.POSTWORLD);
@@ -781,41 +782,14 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
     public abstract boolean shouldRconBroadcast();
 
     public boolean saveAllChunks(boolean flag, boolean flag1, boolean flag2) {
-        boolean flag3 = false;
-
-        for (Iterator iterator = this.getAllLevels().iterator(); iterator.hasNext(); flag3 = true) {
-            WorldServer worldserver = (WorldServer) iterator.next();
-
+        for (WorldServer worldserver : this.getAllLevels()) {
             if (!flag) {
                 MinecraftServer.LOGGER.info("Saving chunks for level '{}'/{}", worldserver, worldserver.dimension().location());
             }
 
             worldserver.save((IProgressUpdate) null, flag1, worldserver.noSave && !flag2);
         }
-
-        // CraftBukkit start - moved to WorldServer.save
-        /*
-        WorldServer worldserver1 = this.overworld();
-        IWorldDataServer iworlddataserver = this.worldData.overworldData();
-
-        iworlddataserver.setWorldBorder(worldserver1.getWorldBorder().createSettings());
-        this.worldData.setCustomBossEvents(this.getCustomBossEvents().save());
-        this.storageSource.saveDataTag(this.registryAccess(), this.worldData, this.getPlayerList().getSingleplayerData());
-        */
-        // CraftBukkit end
-        if (flag1) {
-            Iterator iterator1 = this.getAllLevels().iterator();
-
-            while (iterator1.hasNext()) {
-                WorldServer worldserver2 = (WorldServer) iterator1.next();
-
-                MinecraftServer.LOGGER.info("ThreadedAnvilChunkStorage ({}): All chunks are saved", worldserver2.getChunkSource().chunkMap.getStorageName());
-            }
-
-            MinecraftServer.LOGGER.info("ThreadedAnvilChunkStorage: All dimensions are saved");
-        }
-
-        return flag3;
+        return true;
     }
 
     public boolean saveEverything(boolean flag, boolean flag1, boolean flag2) {
@@ -853,12 +827,14 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
             if (hasStopped) return;
             hasStopped = true;
         }
+
         // CraftBukkit end
         if (this.metricsRecorder.isRecording()) {
             this.cancelRecordingMetrics();
         }
 
         MinecraftServer.LOGGER.info("Stopping server");
+
         // CraftBukkit start
         if (this.server != null) {
             this.server.disablePlugins();
@@ -869,7 +845,7 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
         }
 
         this.isSaving = true;
-        if (this.playerList != null) {
+        if (playerList != null) {
             MinecraftServer.LOGGER.info("Saving players");
             this.playerList.saveAll();
             this.playerList.removeAll();
@@ -888,6 +864,7 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
             }
         }
 
+
         while (this.levels.values().stream().anyMatch((worldserver1) -> {
             return worldserver1.getChunkSource().chunkMap.hasWork();
         })) {
@@ -905,7 +882,7 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
             this.waitUntilNextTick();
         }
 
-        this.saveAllChunks(false, true, false);
+        saveAllChunks(false, true, false);
         iterator = this.getAllLevels().iterator();
 
         while (iterator.hasNext()) {
@@ -933,6 +910,11 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
             this.getProfileCache().save();
         }
         // Spigot end
+
+        //Matrix
+        MinecraftServer.LOGGER.info("Stopping Matrix Threads");
+        MatrixCore.StopMatrix();
+        //M end
 
     }
 
@@ -1190,6 +1172,12 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
     public void onServerExit() {}
 
     public void tickServer(BooleanSupplier booleansupplier) {
+//        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//            }
+//        });
         SpigotTimings.serverTickTimer.startTiming(); // Spigot
         long i = SystemUtils.getNanos();
 
@@ -1201,13 +1189,18 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
         }
 
         if (autosavePeriod > 0 && this.tickCount % autosavePeriod == 0) { // CraftBukkit
-            SpigotTimings.worldSaveTimer.startTiming(); // Spigot
-            MinecraftServer.LOGGER.debug("Autosave started");
-            this.profiler.push("save");
-            this.saveEverything(true, false, false);
-            this.profiler.pop();
-            MinecraftServer.LOGGER.debug("Autosave finished");
-            SpigotTimings.worldSaveTimer.stopTiming(); // Spigot
+            Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                @Override
+                public void run() {
+                    SpigotTimings.worldSaveTimer.startTiming(); // Spigot
+                    MinecraftServer.LOGGER.debug("Autosave started");
+                    profiler.push("save");
+                    saveEverything(true, false, false);
+                    profiler.pop();
+                    MinecraftServer.LOGGER.debug("Autosave finished");
+                    SpigotTimings.worldSaveTimer.stopTiming(); // Spigot
+                }
+            });
         }
 
         this.profiler.push("tallying");
@@ -1429,7 +1422,7 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
 
     @DontObfuscate
     public String getServerModName() {
-        return "Spigot"; // Spigot - Spigot > // CraftBukkit - cb > vanilla!
+        return "MatrixCore"; // Spigot - Spigot > // CraftBukkit - cb > vanilla!
     }
 
     public SystemReport fillSystemReport(SystemReport systemreport) {
@@ -2140,6 +2133,14 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
             bufferedwriter.close();
         }
 
+    }
+
+    public static int[] getMatrixAsyncSchedulerTicks(){
+        int[] msecs = new int[MatrixCore.MatrixAsyncScheduler.MatrixTicks.length];
+        for(int cur = 0; cur != msecs.length; cur++){
+            msecs[cur] = (int) (System.currentTimeMillis() - MatrixCore.MatrixAsyncScheduler.MatrixTicks[cur]);
+        }
+        return msecs;
     }
 
     private void dumpNativeModules(Path path) throws IOException {

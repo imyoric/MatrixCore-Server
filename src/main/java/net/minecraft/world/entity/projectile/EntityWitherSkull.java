@@ -92,8 +92,10 @@ public class EntityWitherSkull extends EntityFireball {
         }
     }
 
+    boolean isExploded = false;
     @Override
     protected void onHit(MovingObjectPosition movingobjectposition) {
+        if(isExploded) return;
         super.onHit(movingobjectposition);
         if (!this.level().isClientSide) {
             // CraftBukkit start
@@ -103,6 +105,7 @@ public class EntityWitherSkull extends EntityFireball {
 
             if (!event.isCancelled()) {
                 this.level().explode(this, this.getX(), this.getY(), this.getZ(), event.getRadius(), event.getFire(), World.a.MOB);
+                isExploded = true;
             }
             // CraftBukkit end
             this.discard();

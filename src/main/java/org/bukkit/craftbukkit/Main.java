@@ -13,11 +13,15 @@ import java.util.logging.Logger;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.util.PathConverter;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.PluginLoader;
 import org.fusesource.jansi.AnsiConsole;
+import ru.yoricya.minecraft.matrixcore.MatrixCore;
 
 public class Main {
     public static boolean useJline = true;
     public static boolean useConsole = true;
+    public static MatrixCore MatrixCore;
 
     public static void main(String[] args) {
         // Todo: Installation script
@@ -208,18 +212,26 @@ public class Main {
                     useConsole = false;
                 }
 
-                if (Main.class.getPackage().getImplementationVendor() != null && System.getProperty("IReallyKnowWhatIAmDoingISwear") == null) {
-                    Date buildDate = new Date(Integer.parseInt(Main.class.getPackage().getImplementationVendor()) * 1000L);
-
-                    Calendar deadline = Calendar.getInstance();
-                    deadline.add(Calendar.DAY_OF_YEAR, -21);
-                    if (buildDate.before(deadline.getTime())) {
-                        System.err.println("*** Error, this build is outdated ***");
-                        System.err.println("*** Please download a new build as per instructions from https://www.spigotmc.org/go/outdated-spigot ***");
-                        System.err.println("*** Server will start in 20 seconds ***");
-                        Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+//                if (Main.class.getPackage().getImplementationVendor() != null && System.getProperty("IReallyKnowWhatIAmDoingISwear") == null) {
+////                    Date buildDate = new Date(Integer.parseInt(Main.class.getPackage().getImplementationVendor()) * 1000L);
+////
+////                    Calendar deadline = Calendar.getInstance();
+////                    deadline.add(Calendar.DAY_OF_YEAR, -21);
+////                    if (buildDate.before(deadline.getTime())) {
+////                        System.err.println("*** Error, this build is outdated ***");
+////                        System.err.println("*** Please download a new build as per instructions from https://www.spigotmc.org/go/outdated-spigot ***");
+////                        System.err.println("*** Server will start in 20 seconds ***");
+////                        Thread.sleep(TimeUnit.SECONDS.toMillis(20));
+////                    }
+//                }
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println("MatrixCore Init...");
+                        MatrixCore = new MatrixCore();
+                        System.out.println("MatrixCore Inited!");
                     }
-                }
+                }).start();
 
                 System.out.println("Loading libraries, please wait...");
                 net.minecraft.server.Main.main(options);

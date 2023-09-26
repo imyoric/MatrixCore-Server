@@ -3,34 +3,32 @@ package net.minecraft.server.gui;
 import com.google.common.collect.Lists;
 import com.mojang.logging.LogQueues;
 import com.mojang.logging.LogUtils;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
+
+import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+
+import io.netty.util.internal.shaded.org.jctools.queues.MpscUnboundedArrayQueue;
 import net.minecraft.DefaultUncaughtExceptionHandler;
+import net.minecraft.SystemUtils;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.slf4j.Logger;
 
 public class ServerGUI extends JComponent {
@@ -95,7 +93,58 @@ public class ServerGUI extends JComponent {
 
     private JComponent buildInfoPanel() {
         JPanel jpanel = new JPanel(new BorderLayout());
-        GuiStatsComponent guistatscomponent = new GuiStatsComponent(this.server);
+        GuiStatsComponent guistatscomponent = new GuiStatsComponent(this.server){
+            @Override
+            public void paint(Graphics var0) {
+                super.paint(var0);
+
+                String[] MatrixTicks = new String[MinecraftServer.getMatrixAsyncSchedulerTicks().length+1];
+                MatrixTicks[0] = "MatrixAsyncScheduler Ticks:";
+
+                var0.drawString(MatrixTicks[0], 32, 116 + 3 * 16);
+
+                int cur = 0;
+                for (int tick: MinecraftServer.getMatrixAsyncSchedulerTicks()){
+                    if(tick == -1) MatrixTicks[cur+1] = "Thr" +cur+ ": sleep.";
+                    if(tick < -1) tick = 0;
+                    if(tick > 1000){
+                        tick /= 1000;
+                        MatrixTicks[cur+1] = "Thr" +cur+ ": " + tick + "SEC";
+                    }else MatrixTicks[cur+1] = "Thr" +cur+ ": " + tick + "ms";
+
+                    cur++;
+                }
+
+                int TicksCub = (MatrixTicks.length-1) / 4;
+
+                cur = 1;
+                int CurX = 32;
+                int CurY = 4;
+                for(int curCub = 0; curCub != TicksCub; curCub++){
+                    for(int curCunElm = 0; curCunElm != 4; curCunElm++){
+                        int curX = CurX;
+                        // System.out.println("CUR = "+cur/4);
+
+                        if(cur - 4 < MatrixTicks.length && cur - 4 > 0){
+                            curX += MatrixTicks[cur - 4].length() * 2 * curCub;
+                        }
+
+                        String endwith = ".";
+                        if(cur > 15)
+                            endwith = ". And other...";
+
+                        if(MatrixTicks[cur] == null){
+                            var0.drawString("Thr?" + ": ?" + "ms"+endwith, curX, 116 + CurY * 16);
+                        }else var0.drawString(MatrixTicks[cur]+endwith, curX, 116 + CurY * 16);
+                        cur++;
+                        CurY++;
+                    }
+                    if(cur-1 > 16) continue;
+                    CurY = 4;
+                    CurX+=64;
+                }
+            }
+        };
         Collection<Runnable> collection = this.finalizers; // CraftBukkit - decompile error
 
         Objects.requireNonNull(guistatscomponent);

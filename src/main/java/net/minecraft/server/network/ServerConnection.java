@@ -45,6 +45,7 @@ import net.minecraft.network.protocol.EnumProtocolDirection;
 import net.minecraft.network.protocol.game.PacketPlayOutKickDisconnect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.LazyInitVar;
+import org.bukkit.Bukkit;
 import org.slf4j.Logger;
 
 public class ServerConnection {
@@ -154,49 +155,55 @@ public class ServerConnection {
     }
 
     public void tick() {
-        List list = this.connections;
+        // Spigot Start
+        // This prevents players from 'gaming' the server, and strategically relogging to increase their position in the tick order
+        if ( org.spigotmc.SpigotConfig.playerShuffle > 0 && MinecraftServer.currentTick % org.spigotmc.SpigotConfig.playerShuffle == 0 )
+        {
+            Collections.shuffle( this.connections );
+        }
+        // Spigot End
+        Iterator iterator = this.connections.iterator();
 
-        synchronized (this.connections) {
-            // Spigot Start
-            // This prevents players from 'gaming' the server, and strategically relogging to increase their position in the tick order
-            if ( org.spigotmc.SpigotConfig.playerShuffle > 0 && MinecraftServer.currentTick % org.spigotmc.SpigotConfig.playerShuffle == 0 )
-            {
-                Collections.shuffle( this.connections );
-            }
-            // Spigot End
-            Iterator iterator = this.connections.iterator();
+        while (iterator.hasNext()) {
 
-            while (iterator.hasNext()) {
-                NetworkManager networkmanager = (NetworkManager) iterator.next();
+            NetworkManager networkmanager = (NetworkManager) iterator.next();
 
-                if (!networkmanager.isConnecting()) {
-                    if (networkmanager.isConnected()) {
-                        try {
-                            networkmanager.tick();
-                        } catch (Exception exception) {
-                            if (networkmanager.isMemoryConnection()) {
-                                throw new ReportedException(CrashReport.forThrowable(exception, "Ticking memory connection"));
+            if (!networkmanager.isConnecting()) {
+                if (networkmanager.isConnected()) {
+                    Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        networkmanager.tick();
+                                    }
+                                });
+                            } catch (Exception exception) {
+                                if (networkmanager.isMemoryConnection()) {
+                                    throw new ReportedException(CrashReport.forThrowable(exception, "Ticking memory connection"));
+                                }
+
+                                ServerConnection.LOGGER.warn("Failed to handle packet for {}", networkmanager.getRemoteAddress(), exception);
+                                IChatMutableComponent ichatmutablecomponent = IChatBaseComponent.literal("Internal server error");
+
+                                networkmanager.send(new PacketPlayOutKickDisconnect(ichatmutablecomponent), PacketSendListener.thenRun(() -> {
+                                    networkmanager.disconnect(ichatmutablecomponent);
+                                }));
+                                networkmanager.setReadOnly();
                             }
-
-                            ServerConnection.LOGGER.warn("Failed to handle packet for {}", networkmanager.getRemoteAddress(), exception);
-                            IChatMutableComponent ichatmutablecomponent = IChatBaseComponent.literal("Internal server error");
-
-                            networkmanager.send(new PacketPlayOutKickDisconnect(ichatmutablecomponent), PacketSendListener.thenRun(() -> {
-                                networkmanager.disconnect(ichatmutablecomponent);
-                            }));
-                            networkmanager.setReadOnly();
                         }
-                    } else {
-                        // Spigot Start
-                        // Fix a race condition where a NetworkManager could be unregistered just before connection.
-                        if (networkmanager.preparing) continue;
-                        // Spigot End
-                        iterator.remove();
-                        networkmanager.handleDisconnection();
-                    }
+                    });
+                } else {
+                    // Spigot Start
+                    // Fix a race condition where a NetworkManager could be unregistered just before connection.
+                    if (networkmanager.preparing) continue;
+                    // Spigot End
+                    iterator.remove();
+                    networkmanager.handleDisconnection();
                 }
             }
-
         }
     }
 

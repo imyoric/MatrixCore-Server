@@ -23,6 +23,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scheduler.BukkitWorker;
+import org.jetbrains.annotations.NotNull;
+import ru.yoricya.minecraft.matrixcore.MatrixCore;
 
 /**
  * The fundamental concepts for this implementation:
@@ -115,10 +117,95 @@ public class CraftScheduler implements BukkitScheduler {
         return this.scheduleSyncDelayedTask(plugin, task, 0L);
     }
 
+    @NotNull
     @Override
     public BukkitTask runTask(Plugin plugin, Runnable runnable) {
         return runTaskLater(plugin, runnable, 0L);
     }
+
+    @NotNull
+    @Override
+    public BukkitTask runTaskWithMatrix(@NotNull Runnable task) throws IllegalArgumentException { //MatrixCore Only
+        return handle(new CraftTask(task), 1L);
+    }
+
+    @NotNull
+    @Override
+    public BukkitTask runTaskWithMatrix(@NotNull Runnable task, boolean ifComleteCheck) throws IllegalArgumentException { //MatrixCore Only
+        if(Thread.currentThread().getName().equals("Server thread"))
+            return runTaskWithMatrix(task);
+
+        if(ifComleteCheck){
+            final boolean[] checkComplete = {false};
+            Runnable Met = new Runnable(){
+                @Override
+                public void run() {
+                    try {
+                        task.run();
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    checkComplete[0] = true;
+                }
+            };
+            BukkitTask btask = handle(new CraftTask(Met), 1L);
+
+            while(!checkComplete[0]){
+                try {
+                    Thread.sleep(16);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return btask;
+        }else return runTaskWithMatrix(task);
+    }
+
+    @NotNull
+    @Override
+    public MatrixCore.MatrixAsyncTask runAsyncTaskWithMatrix(@NotNull Runnable task) throws IllegalArgumentException {
+//        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+//        System.out.println("---------------------Стэк:");
+//        for (StackTraceElement element : stackTrace) {
+//            System.out.println("Класс: " + element.getClassName());
+//            System.out.println("Метод: " + element.getMethodName());
+//        }
+//        System.out.println(":Кон---------------------");
+        return MatrixCore.MatrixAsyncScheduler.addTask(task);
+    }
+
+    @NotNull
+    @Override
+    public MatrixCore.MatrixAsyncTask runAsyncTaskWithMatrix(@NotNull Runnable task, boolean ifComleteCheck) throws IllegalArgumentException {
+//        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+//        System.out.println("---------------------Стэк:");
+//        for (StackTraceElement element : stackTrace) {
+//            System.out.println("Класс: " + element.getClassName());
+//            System.out.println("Метод: " + element.getMethodName());
+//        }
+//        System.out.println(":Кон---------------------");
+        if(!ifComleteCheck) return MatrixCore.MatrixAsyncScheduler.addTask(task);
+        MatrixCore.MatrixAsyncTask mtask = MatrixCore.MatrixAsyncScheduler.addTask(task);
+        mtask.RunnedCheck();
+        return mtask;
+    }
+
+    @NotNull
+    @Override
+    public MatrixCore.MatrixAsyncTask runAsyncTaskWithMatrix(@NotNull Runnable task, boolean ifComleteCheck, long msecPriority) throws IllegalArgumentException {
+//        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+//        System.out.println("---------------------Стэк:");
+//        for (StackTraceElement element : stackTrace) {
+//            System.out.println("Класс: " + element.getClassName());
+//            System.out.println("Метод: " + element.getMethodName());
+//        }
+//        System.out.println(":Кон---------------------");
+        if(!ifComleteCheck) return MatrixCore.MatrixAsyncScheduler.addTask(task, msecPriority);
+        MatrixCore.MatrixAsyncTask mtask = MatrixCore.MatrixAsyncScheduler.addTask(task, msecPriority);
+        mtask.RunnedCheck();
+        return mtask;
+    }
+
 
     @Override
     public void runTask(Plugin plugin, Consumer<BukkitTask> task) throws IllegalArgumentException {

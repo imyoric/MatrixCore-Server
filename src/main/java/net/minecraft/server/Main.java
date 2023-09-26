@@ -153,16 +153,16 @@ public class Main {
             }
 
             // Spigot Start
-            boolean eulaAgreed = Boolean.getBoolean( "com.mojang.eula.agree" );
+            boolean eulaAgreed = Boolean.getBoolean("com.mojang.eula.agree" );
             if ( eulaAgreed )
             {
-                System.err.println( "You have used the Spigot command line EULA agreement flag." );
-                System.err.println( "By using this setting you are indicating your agreement to Mojang's EULA (https://account.mojang.com/documents/minecraft_eula)." );
-                System.err.println( "If you do not agree to the above EULA please stop your server and remove this flag immediately." );
+                System.err.println("You have used the Spigot command line EULA agreement flag." );
+                System.err.println("By using this setting you are indicating your agreement to Mojang's EULA (https://account.mojang.com/documents/minecraft_eula)." );
+                System.err.println("If you do not agree to the above EULA please stop your server and remove this flag immediately." );
             }
             // Spigot End
             if (!eula.hasAgreedToEULA() && !eulaAgreed) { // Spigot
-                Main.LOGGER.info("You need to agree to the EULA in order to run the server. Go to eula.txt for more info.");
+                Main.LOGGER.info("Вам необходимо согласится с правилами EULA! Перейдите в файл eula.txt за подробной информацией.");
                 return;
             }
 
@@ -176,12 +176,12 @@ public class Main {
 
             if (worldinfo != null) {
                 if (worldinfo.requiresManualConversion()) {
-                    Main.LOGGER.info("This world must be opened in an older version (like 1.6.4) to be safely converted");
+                    Main.LOGGER.warn("Для безопасного преобразования этот мир должен быть открыт в старой версии (1.6.4).");
                     return;
                 }
 
                 if (!worldinfo.isCompatible()) {
-                    Main.LOGGER.info("This world was created by an incompatible version.");
+                    Main.LOGGER.warn("Этот мир был создан несовместимой версией.");
                     return;
                 }
             }
@@ -189,7 +189,7 @@ public class Main {
             boolean flag = optionset.has("safeMode");
 
             if (flag) {
-                Main.LOGGER.warn("Safe mode active, only vanilla datapack will be loaded");
+                Main.LOGGER.warn("Безопасный режим активен!");
             }
 
             ResourcePackRepository resourcepackrepository = ResourcePackSourceVanilla.createPackRepository(convertable_conversionsession.getLevelPath(SavedFile.DATAPACK_DIR));
@@ -277,6 +277,7 @@ public class Main {
                 dedicatedserver1.setDemo(optionset.has(optionspec2));
                 dedicatedserver1.setId((String) optionset.valueOf(optionspec12));
                 */
+
                 boolean flag1 = !optionset.has("nogui") && !optionset.nonOptionArguments().contains("nogui");
 
                 if (flag1 && !GraphicsEnvironment.isHeadless()) {
@@ -292,16 +293,6 @@ public class Main {
 
                 return dedicatedserver1;
             });
-            /* CraftBukkit start
-            Thread thread = new Thread("Server Shutdown Thread") {
-                public void run() {
-                    dedicatedserver.halt(true);
-                }
-            };
-
-            thread.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(Main.LOGGER));
-            Runtime.getRuntime().addShutdownHook(thread);
-            */ // CraftBukkit end
         } catch (Exception exception1) {
             Main.LOGGER.error(LogUtils.FATAL_MARKER, "Failed to start the minecraft server", exception1);
         }

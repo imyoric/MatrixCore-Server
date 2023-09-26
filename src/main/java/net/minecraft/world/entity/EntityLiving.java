@@ -117,6 +117,7 @@ import net.minecraft.world.phys.AxisAlignedBB;
 import net.minecraft.world.phys.MovingObjectPosition;
 import net.minecraft.world.phys.Vec3D;
 import net.minecraft.world.scores.ScoreboardTeam;
+import org.bukkit.Bukkit;
 import org.slf4j.Logger;
 
 // CraftBukkit start
@@ -376,7 +377,8 @@ public abstract class EntityLiving extends Entity implements Attackable {
             // CraftBukkit end
         }
 
-        super.checkFallDamage(d0, flag, iblockdata, blockposition);
+        Bukkit.getScheduler().runTaskWithMatrix(() -> super.checkFallDamage(d0, flag, iblockdata, blockposition));
+
         if (flag) {
             this.lastClimbablePos = Optional.empty();
         }
@@ -2837,133 +2839,148 @@ public abstract class EntityLiving extends Entity implements Attackable {
     @Override
     public void tick() {
         SpigotTimings.timerEntityBaseTick.startTiming(); // Spigot
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (!level().isClientSide) {
+                    int i = getArrowCount();
+
+                    if (i > 0) {
+                        if (removeArrowTime <= 0) {
+                            removeArrowTime = 20 * (30 - i);
+                        }
+
+                        --removeArrowTime;
+                        if (removeArrowTime <= 0) setArrowCount(i - 1);
+
+                    }
+
+                    int j = getStingerCount();
+
+                    if (j > 0) {
+                        if (removeStingerTime <= 0) {
+                            removeStingerTime = 20 * (30 - j);
+                        }
+
+                        --removeStingerTime;
+                        if (removeStingerTime <= 0) setStingerCount(j - 1);
+
+                    }
+
+                    detectEquipmentUpdates();
+
+                    if (tickCount % 20 == 0) Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            getCombatTracker().recheckStatus();
+                        }
+                    });
+
+                    if (isSleeping() && !checkBedExists()) Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            stopSleeping();
+                        }
+                    });
+                }
+                if (!isRemoved()) Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        SpigotTimings.timerEntityBaseTick.stopTiming(); // Spigot
+                        aiStep();
+                        SpigotTimings.timerEntityTickRest.startTiming(); // Spigot
+                    }
+                });
+
+                double d0 = getX() - xo;
+                double d1 = getZ() - zo;
+                float f = (float) (d0 * d0 + d1 * d1);
+                float f1 = yBodyRot;
+                float f2 = 0.0F;
+
+                oRun = run;
+                float f3 = 0.0F;
+
+                if (f > 0.0025000002F) {
+                    f3 = 1.0F;
+                    f2 = (float) Math.sqrt((double) f) * 3.0F;
+                    float f4 = (float) MathHelper.atan2(d1, d0) * 57.295776F - 90.0F;
+                    float f5 = MathHelper.abs(MathHelper.wrapDegrees(getYRot()) - f4);
+
+                    if (95.0F < f5 && f5 < 265.0F) {
+                        f1 = f4 - 180.0F;
+                    } else {
+                        f1 = f4;
+                    }
+                }
+
+                if (attackAnim > 0.0F) {
+                    f1 = getYRot();
+                }
+
+                if (!onGround()) {
+                    f3 = 0.0F;
+                }
+
+                run += (f3 - run) * 0.3F;
+
+                level().getProfiler().push("headTurn");
+                f2 = tickHeadTurn(f1, f2);
+                level().getProfiler().pop();
+                level().getProfiler().push("rangeChecks");
+
+                while (getYRot() - yRotO < -180.0F) {
+                    yRotO -= 360.0F;
+                }
+
+                while (getYRot() - yRotO >= 180.0F) {
+                    yRotO += 360.0F;
+                }
+
+                while (yBodyRot - yBodyRotO < -180.0F) {
+                    yBodyRotO -= 360.0F;
+                }
+
+                while (yBodyRot - yBodyRotO >= 180.0F) {
+                    yBodyRotO += 360.0F;
+                }
+
+                while (getXRot() - xRotO < -180.0F) {
+                    xRotO -= 360.0F;
+                }
+
+                while (getXRot() - xRotO >= 180.0F) {
+                    xRotO += 360.0F;
+                }
+
+                while (yHeadRot - yHeadRotO < -180.0F) {
+                    yHeadRotO -= 360.0F;
+                }
+
+                while (yHeadRot - yHeadRotO >= 180.0F) {
+                    yHeadRotO += 360.0F;
+                }
+
+                level().getProfiler().pop();
+                animStep += f2;
+                if (isFallFlying()) {
+                    ++fallFlyTicks;
+                } else {
+                    fallFlyTicks = 0;
+                }
+
+                if (isSleeping()) setXRot(0.0F);
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        SpigotTimings.timerEntityTickRest.stopTiming(); // Spigot
+                    }
+                });
+            }
+        });
         super.tick();
         this.updatingUsingItem();
         this.updateSwimAmount();
-        if (!this.level().isClientSide) {
-            int i = this.getArrowCount();
-
-            if (i > 0) {
-                if (this.removeArrowTime <= 0) {
-                    this.removeArrowTime = 20 * (30 - i);
-                }
-
-                --this.removeArrowTime;
-                if (this.removeArrowTime <= 0) {
-                    this.setArrowCount(i - 1);
-                }
-            }
-
-            int j = this.getStingerCount();
-
-            if (j > 0) {
-                if (this.removeStingerTime <= 0) {
-                    this.removeStingerTime = 20 * (30 - j);
-                }
-
-                --this.removeStingerTime;
-                if (this.removeStingerTime <= 0) {
-                    this.setStingerCount(j - 1);
-                }
-            }
-
-            this.detectEquipmentUpdates();
-            if (this.tickCount % 20 == 0) {
-                this.getCombatTracker().recheckStatus();
-            }
-
-            if (this.isSleeping() && !this.checkBedExists()) {
-                this.stopSleeping();
-            }
-        }
-
-        if (!this.isRemoved()) {
-            SpigotTimings.timerEntityBaseTick.stopTiming(); // Spigot
-            this.aiStep();
-            SpigotTimings.timerEntityTickRest.startTiming(); // Spigot
-        }
-
-        double d0 = this.getX() - this.xo;
-        double d1 = this.getZ() - this.zo;
-        float f = (float) (d0 * d0 + d1 * d1);
-        float f1 = this.yBodyRot;
-        float f2 = 0.0F;
-
-        this.oRun = this.run;
-        float f3 = 0.0F;
-
-        if (f > 0.0025000002F) {
-            f3 = 1.0F;
-            f2 = (float) Math.sqrt((double) f) * 3.0F;
-            float f4 = (float) MathHelper.atan2(d1, d0) * 57.295776F - 90.0F;
-            float f5 = MathHelper.abs(MathHelper.wrapDegrees(this.getYRot()) - f4);
-
-            if (95.0F < f5 && f5 < 265.0F) {
-                f1 = f4 - 180.0F;
-            } else {
-                f1 = f4;
-            }
-        }
-
-        if (this.attackAnim > 0.0F) {
-            f1 = this.getYRot();
-        }
-
-        if (!this.onGround()) {
-            f3 = 0.0F;
-        }
-
-        this.run += (f3 - this.run) * 0.3F;
-        this.level().getProfiler().push("headTurn");
-        f2 = this.tickHeadTurn(f1, f2);
-        this.level().getProfiler().pop();
-        this.level().getProfiler().push("rangeChecks");
-
-        while (this.getYRot() - this.yRotO < -180.0F) {
-            this.yRotO -= 360.0F;
-        }
-
-        while (this.getYRot() - this.yRotO >= 180.0F) {
-            this.yRotO += 360.0F;
-        }
-
-        while (this.yBodyRot - this.yBodyRotO < -180.0F) {
-            this.yBodyRotO -= 360.0F;
-        }
-
-        while (this.yBodyRot - this.yBodyRotO >= 180.0F) {
-            this.yBodyRotO += 360.0F;
-        }
-
-        while (this.getXRot() - this.xRotO < -180.0F) {
-            this.xRotO -= 360.0F;
-        }
-
-        while (this.getXRot() - this.xRotO >= 180.0F) {
-            this.xRotO += 360.0F;
-        }
-
-        while (this.yHeadRot - this.yHeadRotO < -180.0F) {
-            this.yHeadRotO -= 360.0F;
-        }
-
-        while (this.yHeadRot - this.yHeadRotO >= 180.0F) {
-            this.yHeadRotO += 360.0F;
-        }
-
-        this.level().getProfiler().pop();
-        this.animStep += f2;
-        if (this.isFallFlying()) {
-            ++this.fallFlyTicks;
-        } else {
-            this.fallFlyTicks = 0;
-        }
-
-        if (this.isSleeping()) {
-            this.setXRot(0.0F);
-        }
-
-        SpigotTimings.timerEntityTickRest.stopTiming(); // Spigot
     }
 
     public void detectEquipmentUpdates() {
@@ -2972,7 +2989,12 @@ public abstract class EntityLiving extends Entity implements Attackable {
         if (map != null) {
             this.handleHandSwap(map);
             if (!map.isEmpty()) {
-                this.handleEquipmentChanges(map);
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        handleEquipmentChanges(map);
+                    }
+                });
             }
         }
 
@@ -3093,155 +3115,268 @@ public abstract class EntityLiving extends Entity implements Attackable {
     }
 
     public void aiStep() {
-        if (this.noJumpDelay > 0) {
-            --this.noJumpDelay;
-        }
-
-        if (this.isControlledByLocalInstance()) {
-            this.lerpSteps = 0;
-            this.syncPacketPositionCodec(this.getX(), this.getY(), this.getZ());
-        }
-
-        if (this.lerpSteps > 0) {
-            double d0 = this.getX() + (this.lerpX - this.getX()) / (double) this.lerpSteps;
-            double d1 = this.getY() + (this.lerpY - this.getY()) / (double) this.lerpSteps;
-            double d2 = this.getZ() + (this.lerpZ - this.getZ()) / (double) this.lerpSteps;
-            double d3 = MathHelper.wrapDegrees(this.lerpYRot - (double) this.getYRot());
-
-            this.setYRot(this.getYRot() + (float) d3 / (float) this.lerpSteps);
-            this.setXRot(this.getXRot() + (float) (this.lerpXRot - (double) this.getXRot()) / (float) this.lerpSteps);
-            --this.lerpSteps;
-            this.setPos(d0, d1, d2);
-            this.setRot(this.getYRot(), this.getXRot());
-        } else if (!this.isEffectiveAi()) {
-            this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
-        }
-
-        if (this.lerpHeadSteps > 0) {
-            this.yHeadRot += (float) MathHelper.wrapDegrees(this.lyHeadRot - (double) this.yHeadRot) / (float) this.lerpHeadSteps;
-            --this.lerpHeadSteps;
-        }
-
-        Vec3D vec3d = this.getDeltaMovement();
-        double d4 = vec3d.x;
-        double d5 = vec3d.y;
-        double d6 = vec3d.z;
-
-        if (Math.abs(vec3d.x) < 0.003D) {
-            d4 = 0.0D;
-        }
-
-        if (Math.abs(vec3d.y) < 0.003D) {
-            d5 = 0.0D;
-        }
-
-        if (Math.abs(vec3d.z) < 0.003D) {
-            d6 = 0.0D;
-        }
-
-        this.setDeltaMovement(d4, d5, d6);
-        this.level().getProfiler().push("ai");
-        SpigotTimings.timerEntityAI.startTiming(); // Spigot
-        if (this.isImmobile()) {
-            this.jumping = false;
-            this.xxa = 0.0F;
-            this.zza = 0.0F;
-        } else if (this.isEffectiveAi()) {
-            this.level().getProfiler().push("newAi");
-            this.serverAiStep();
-            this.level().getProfiler().pop();
-        }
-        SpigotTimings.timerEntityAI.stopTiming(); // Spigot
-
-        this.level().getProfiler().pop();
-        this.level().getProfiler().push("jump");
-        if (this.jumping && this.isAffectedByFluids()) {
-            double d7;
-
-            if (this.isInLava()) {
-                d7 = this.getFluidHeight(TagsFluid.LAVA);
-            } else {
-                d7 = this.getFluidHeight(TagsFluid.WATER);
-            }
-
-            boolean flag = this.isInWater() && d7 > 0.0D;
-            double d8 = this.getFluidJumpThreshold();
-
-            if (flag && (!this.onGround() || d7 > d8)) {
-                this.jumpInLiquid(TagsFluid.WATER);
-            } else if (this.isInLava() && (!this.onGround() || d7 > d8)) {
-                this.jumpInLiquid(TagsFluid.LAVA);
-            } else if ((this.onGround() || flag && d7 <= d8) && this.noJumpDelay == 0) {
-                this.jumpFromGround();
-                this.noJumpDelay = 10;
-            }
-        } else {
-            this.noJumpDelay = 0;
-        }
-
-        this.level().getProfiler().pop();
-        this.level().getProfiler().push("travel");
-        this.xxa *= 0.98F;
-        this.zza *= 0.98F;
-        this.updateFallFlying();
-        AxisAlignedBB axisalignedbb = this.getBoundingBox();
-        Vec3D vec3d1 = new Vec3D((double) this.xxa, (double) this.yya, (double) this.zza);
-
-        if (this.hasEffect(MobEffects.SLOW_FALLING) || this.hasEffect(MobEffects.LEVITATION)) {
-            this.resetFallDistance();
-        }
-
-        SpigotTimings.timerEntityAIMove.startTiming(); // Spigot
-        label104:
-        {
-            EntityLiving entityliving = this.getControllingPassenger();
-
-            if (entityliving instanceof EntityHuman) {
-                EntityHuman entityhuman = (EntityHuman) entityliving;
-
-                if (this.isAlive()) {
-                    this.travelRidden(entityhuman, vec3d1);
-                    break label104;
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (noJumpDelay > 0) {
+                    --noJumpDelay;
                 }
+
+                if (isControlledByLocalInstance()) {
+                    lerpSteps = 0;
+                    syncPacketPositionCodec(getX(), getY(), getZ());
+                }
+
+                if (lerpSteps > 0) {
+                    double d0 = getX() + (lerpX - getX()) / (double) lerpSteps;
+                    double d1 = getY() + (lerpY - getY()) / (double) lerpSteps;
+                    double d2 = getZ() + (lerpZ - getZ()) / (double) lerpSteps;
+                    double d3 = MathHelper.wrapDegrees(lerpYRot - (double) getYRot());
+
+                    setYRot(getYRot() + (float) d3 / (float) lerpSteps);
+                    setXRot(getXRot() + (float) (lerpXRot - (double) getXRot()) / (float) lerpSteps);
+                    --lerpSteps;
+                    setPos(d0, d1, d2);
+                    setRot(getYRot(), getXRot());
+                } else if (!isEffectiveAi()) {
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            setDeltaMovement(getDeltaMovement().scale(0.98D));
+                        }
+                    });
+                }
+
+                if (lerpHeadSteps > 0) {
+                    yHeadRot += (float) MathHelper.wrapDegrees(lyHeadRot - (double) yHeadRot) / (float) lerpHeadSteps;
+                    --lerpHeadSteps;
+                }
+
+                Vec3D vec3d = getDeltaMovement();
+                double d4 = vec3d.x;
+                double d5 = vec3d.y;
+                double d6 = vec3d.z;
+
+                if (Math.abs(vec3d.x) < 0.003D) {
+                    d4 = 0.0D;
+                }
+
+                if (Math.abs(vec3d.y) < 0.003D) {
+                    d5 = 0.0D;
+                }
+
+                if (Math.abs(vec3d.z) < 0.003D) {
+                    d6 = 0.0D;
+                }
+                double finalD = d4;
+                double finalD1 = d5;
+                double finalD2 = d6;
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        setDeltaMovement(finalD, finalD1, finalD2);
+                        level().getProfiler().push("ai");
+                        SpigotTimings.timerEntityAI.startTiming(); // Spigot
+                    }
+                });
+
+                if (isImmobile()) {
+                    jumping = false;
+                    xxa = 0.0F;
+                    zza = 0.0F;
+                } else if (isEffectiveAi()) {
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            level().getProfiler().push("newAi");
+                            serverAiStep();
+                            level().getProfiler().pop();
+                        }
+                    });
+                }
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        SpigotTimings.timerEntityAI.stopTiming(); // Spigot
+                        level().getProfiler().pop();
+                        level().getProfiler().push("jump");
+                    }
+                });
+
+                if (jumping && isAffectedByFluids()) {
+                    double d7;
+
+                    if (isInLava()) {
+                        d7 = getFluidHeight(TagsFluid.LAVA);
+                    } else {
+                        d7 = getFluidHeight(TagsFluid.WATER);
+                    }
+
+                    boolean flag = isInWater() && d7 > 0.0D;
+                    double d8 = getFluidJumpThreshold();
+
+                    if (flag && (!onGround() || d7 > d8)) {
+                        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                            @Override
+                            public void run() {
+                                jumpInLiquid(TagsFluid.WATER);
+                            }
+                        });
+                    } else if (isInLava() && (!onGround() || d7 > d8)) {
+                        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                            @Override
+                            public void run() {
+                                jumpInLiquid(TagsFluid.LAVA);
+                            }
+                        });
+                    } else if ((onGround() || flag && d7 <= d8) && noJumpDelay == 0) {
+                        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                            @Override
+                            public void run() {
+                                jumpFromGround();
+                            }
+                        });
+                        noJumpDelay = 10;
+                    }
+                } else {
+                    noJumpDelay = 0;
+                }
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        level().getProfiler().pop();
+                        level().getProfiler().push("travel");
+                    }
+                });
+
+
+                xxa *= 0.98F;
+                zza *= 0.98F;
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateFallFlying();
+                    }
+                });
+                AxisAlignedBB axisalignedbb = getBoundingBox();
+                Vec3D vec3d1 = new Vec3D((double) xxa, (double) yya, (double) zza);
+
+                if (hasEffect(MobEffects.SLOW_FALLING) || hasEffect(MobEffects.LEVITATION)) {
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            resetFallDistance();
+                        }
+                    });
+                }
+
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        SpigotTimings.timerEntityAIMove.startTiming(); // Spigot
+                    }
+                });
+
+                label104:
+                {
+                    EntityLiving entityliving = getControllingPassenger();
+
+                    if (entityliving instanceof EntityHuman) {
+                        EntityHuman entityhuman = (EntityHuman) entityliving;
+
+                        if (isAlive()) {
+                            Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                                @Override
+                                public void run() {
+                                    travelRidden(entityhuman, vec3d1);
+                                }
+                            });
+                            break label104;
+                        }
+                    }
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            travel(vec3d1);
+                        }
+                    });
+                }
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        SpigotTimings.timerEntityAIMove.stopTiming(); // Spigot
+                        level().getProfiler().pop();
+                        level().getProfiler().push("freezing");
+                    }
+                });
+
+                if (!level().isClientSide && !isDeadOrDying()) {
+                    int i = getTicksFrozen();
+
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (isInPowderSnow && canFreeze()) {
+                                setTicksFrozen(Math.min(getTicksRequiredToFreeze(), i + 1));
+                            } else {
+                                setTicksFrozen(Math.max(0, i - 2));
+                            }
+                        }
+                    });
+                }
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        removeFrost();
+                        tryAddFrost();
+                    }
+                });
+
+                if (!level().isClientSide && tickCount % 40 == 0 && isFullyFrozen() && canFreeze())
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        hurt(damageSources().freeze(), 1.0F);
+                    }
+                });
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        level().getProfiler().pop();
+                        level().getProfiler().push("push");
+                    }
+                });
+
+                if (autoSpinAttackTicks > 0) {
+                    --autoSpinAttackTicks;
+                    checkAutoSpinAttack(axisalignedbb, getBoundingBox());
+                }
+
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        SpigotTimings.timerEntityAICollision.startTiming(); // Spigot
+                        pushEntities();
+                        SpigotTimings.timerEntityAICollision.stopTiming(); // Spigot
+                    }
+                });
+
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        level().getProfiler().pop();
+                    }
+                });
+
+                if (!level().isClientSide && isSensitiveToWater() && isInWaterRainOrBubble())
+                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        hurt(damageSources().drown(), 1.0F);
+                    }
+                });
             }
-
-            this.travel(vec3d1);
-        }
-        SpigotTimings.timerEntityAIMove.stopTiming(); // Spigot
-
-        this.level().getProfiler().pop();
-        this.level().getProfiler().push("freezing");
-        if (!this.level().isClientSide && !this.isDeadOrDying()) {
-            int i = this.getTicksFrozen();
-
-            if (this.isInPowderSnow && this.canFreeze()) {
-                this.setTicksFrozen(Math.min(this.getTicksRequiredToFreeze(), i + 1));
-            } else {
-                this.setTicksFrozen(Math.max(0, i - 2));
-            }
-        }
-
-        this.removeFrost();
-        this.tryAddFrost();
-        if (!this.level().isClientSide && this.tickCount % 40 == 0 && this.isFullyFrozen() && this.canFreeze()) {
-            this.hurt(this.damageSources().freeze(), 1.0F);
-        }
-
-        this.level().getProfiler().pop();
-        this.level().getProfiler().push("push");
-        if (this.autoSpinAttackTicks > 0) {
-            --this.autoSpinAttackTicks;
-            this.checkAutoSpinAttack(axisalignedbb, this.getBoundingBox());
-        }
-
-        SpigotTimings.timerEntityAICollision.startTiming(); // Spigot
-        this.pushEntities();
-        SpigotTimings.timerEntityAICollision.stopTiming(); // Spigot
-        this.level().getProfiler().pop();
-        if (!this.level().isClientSide && this.isSensitiveToWater() && this.isInWaterRainOrBubble()) {
-            this.hurt(this.damageSources().drown(), 1.0F);
-        }
-
+        });
     }
 
     public boolean isSensitiveToWater() {

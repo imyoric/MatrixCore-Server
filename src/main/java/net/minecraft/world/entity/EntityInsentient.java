@@ -76,6 +76,7 @@ import net.minecraft.world.level.pathfinder.PathType;
 
 // CraftBukkit start
 import net.minecraft.server.level.EntityPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -661,16 +662,29 @@ public abstract class EntityInsentient extends EntityLiving implements Targeting
         this.level().getProfiler().push("looting");
         if (!this.level().isClientSide && this.canPickUpLoot() && this.isAlive() && !this.dead && this.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
             BaseBlockPosition baseblockposition = this.getPickupReach();
-            List<EntityItem> list = this.level().getEntitiesOfClass(EntityItem.class, this.getBoundingBox().inflate((double) baseblockposition.getX(), (double) baseblockposition.getY(), (double) baseblockposition.getZ()));
-            Iterator iterator = list.iterator();
-
-            while (iterator.hasNext()) {
-                EntityItem entityitem = (EntityItem) iterator.next();
-
-                if (!entityitem.isRemoved() && !entityitem.getItem().isEmpty() && !entityitem.hasPickUpDelay() && this.wantsToPickUp(entityitem.getItem())) {
-                    this.pickUpItem(entityitem);
+            Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                @Override
+                public void run() {
+                    List<EntityItem> list = level().getEntitiesOfClass(EntityItem.class, getBoundingBox().inflate((double) baseblockposition.getX(), (double) baseblockposition.getY(), (double) baseblockposition.getZ()));
+                    Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                        @Override
+                        public void run() {
+                            Iterator iterator = list.iterator();
+                            while (iterator.hasNext()) {
+                                EntityItem entityitem = (EntityItem) iterator.next();
+                                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (!entityitem.isRemoved() && !entityitem.getItem().isEmpty() && !entityitem.hasPickUpDelay() && wantsToPickUp(entityitem.getItem())) {
+                                            pickUpItem(entityitem);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
                 }
-            }
+            });
         }
 
         this.level().getProfiler().pop();
@@ -876,37 +890,37 @@ public abstract class EntityInsentient extends EntityLiving implements Targeting
         int i = this.level().getServer().getTickCount() + this.getId();
 
         if (i % 2 != 0 && this.tickCount > 1) {
-            this.level().getProfiler().push("targetSelector");
-            this.targetSelector.tickRunningGoals(false);
-            this.level().getProfiler().pop();
-            this.level().getProfiler().push("goalSelector");
-            this.goalSelector.tickRunningGoals(false);
-            this.level().getProfiler().pop();
+            level().getProfiler().push("targetSelector");
+            targetSelector.tickRunningGoals(false);
+            level().getProfiler().pop();
+            level().getProfiler().push("goalSelector");
+            goalSelector.tickRunningGoals(false);
+            level().getProfiler().pop();
         } else {
-            this.level().getProfiler().push("targetSelector");
-            this.targetSelector.tick();
-            this.level().getProfiler().pop();
-            this.level().getProfiler().push("goalSelector");
-            this.goalSelector.tick();
-            this.level().getProfiler().pop();
+            level().getProfiler().push("targetSelector");
+            targetSelector.tick();
+            level().getProfiler().pop();
+            level().getProfiler().push("goalSelector");
+            goalSelector.tick();
+            level().getProfiler().pop();
         }
 
-        this.level().getProfiler().push("navigation");
-        this.navigation.tick();
-        this.level().getProfiler().pop();
-        this.level().getProfiler().push("mob tick");
-        this.customServerAiStep();
-        this.level().getProfiler().pop();
-        this.level().getProfiler().push("controls");
-        this.level().getProfiler().push("move");
-        this.moveControl.tick();
-        this.level().getProfiler().popPush("look");
-        this.lookControl.tick();
-        this.level().getProfiler().popPush("jump");
-        this.jumpControl.tick();
-        this.level().getProfiler().pop();
-        this.level().getProfiler().pop();
-        this.sendDebugPackets();
+        level().getProfiler().push("navigation");
+        navigation.tick();
+        level().getProfiler().pop();
+        level().getProfiler().push("mob tick");
+        customServerAiStep();
+        level().getProfiler().pop();
+        level().getProfiler().push("controls");
+        level().getProfiler().push("move");
+        moveControl.tick();
+        level().getProfiler().popPush("look");
+        lookControl.tick();
+        level().getProfiler().popPush("jump");
+        jumpControl.tick();
+        level().getProfiler().pop();
+        level().getProfiler().pop();
+        sendDebugPackets();
     }
 
     protected void sendDebugPackets() {

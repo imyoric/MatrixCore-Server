@@ -1041,6 +1041,12 @@ public class CraftEventFactory {
                 cause = DamageCause.DRAGON_BREATH;
             } else if (source.is(DamageTypes.MAGIC)) {
                 cause = DamageCause.MAGIC;
+            } else if (source.is(DamageTypes.EXPLOSION)) {
+                cause = DamageCause.ENTITY_EXPLOSION;
+            } else if (source.is(DamageTypes.ON_FIRE)) {
+                cause = DamageCause.FIRE;
+            } else if (source.is(DamageTypes.IN_WALL)) {
+                cause = DamageCause.FLY_INTO_WALL;
             } else {
                 throw new IllegalStateException(String.format("Unhandled damage of %s by %s from %s", entity, damager.getHandle(), source.getMsgId()));
             }

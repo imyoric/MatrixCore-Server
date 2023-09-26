@@ -16,6 +16,7 @@ import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.level.World;
 
 // CraftBukkit start;
+import org.bukkit.Bukkit;
 import org.bukkit.craftbukkit.event.CraftEventFactory;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
 // CraftBukkit end
@@ -36,15 +37,20 @@ public class EntityTNTPrimed extends Entity implements TraceableEntity {
 
     public EntityTNTPrimed(World world, double d0, double d1, double d2, @Nullable EntityLiving entityliving) {
         this(EntityTypes.TNT, world);
-        this.setPos(d0, d1, d2);
-        double d3 = world.random.nextDouble() * 6.2831854820251465D;
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                setPos(d0, d1, d2);
+                double d3 = world.threadSafeRandom.nextDouble() * 6.2831854820251465D;
 
-        this.setDeltaMovement(-Math.sin(d3) * 0.02D, 0.20000000298023224D, -Math.cos(d3) * 0.02D);
-        this.setFuse(80);
-        this.xo = d0;
-        this.yo = d1;
-        this.zo = d2;
-        this.owner = entityliving;
+                setDeltaMovement(-Math.sin(d3) * 0.02D, 0.20000000298023224D, -Math.cos(d3) * 0.02D);
+                setFuse(80);
+                xo = d0;
+                yo = d1;
+                zo = d2;
+                owner = entityliving;
+            }
+        });
     }
 
     @Override
@@ -62,48 +68,67 @@ public class EntityTNTPrimed extends Entity implements TraceableEntity {
         return !this.isRemoved();
     }
 
+    public boolean isExploded = false;
+
     @Override
     public void tick() {
-        if (this.level().spigotConfig.maxTntTicksPerTick > 0 && ++this.level().spigotConfig.currentPrimedTnt > this.level().spigotConfig.maxTntTicksPerTick) { return; } // Spigot
-        if (!this.isNoGravity()) {
-            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.04D, 0.0D));
-        }
+        if(isExploded) return;
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                if (level().spigotConfig.maxTntTicksPerTick > 0 && ++level().spigotConfig.currentPrimedTnt > level().spigotConfig.maxTntTicksPerTick) { return; } // Spigot
+                if (!isNoGravity()) {
+                    setDeltaMovement(getDeltaMovement().add(0.0D, -0.04D, 0.0D));
+                }
 
-        this.move(EnumMoveType.SELF, this.getDeltaMovement());
-        this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
-        if (this.onGround()) {
-            this.setDeltaMovement(this.getDeltaMovement().multiply(0.7D, -0.5D, 0.7D));
-        }
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        move(EnumMoveType.SELF, getDeltaMovement());
+                    }
+                });
 
-        int i = this.getFuse() - 1;
+                setDeltaMovement(getDeltaMovement().scale(0.98D));
+                if (onGround()) {
+                    setDeltaMovement(getDeltaMovement().multiply(0.7D, -0.5D, 0.7D));
+                }
 
-        this.setFuse(i);
-        if (i <= 0) {
-            // CraftBukkit start - Need to reverse the order of the explosion and the entity death so we have a location for the event
-            // this.discard();
-            if (!this.level().isClientSide) {
-                this.explode();
+                int i = getFuse() - 1;
+
+                setFuse(i);
+                if (i <= 0) {
+                    // CraftBukkit start - Need to reverse the order of the explosion and the entity death so we have a location for the event
+                    // discard();
+                    if (!level().isClientSide && !isExploded) {
+                        explode();
+                        isExploded = true;
+                    }
+                    // CraftBukkit end
+                } else {
+                    updateInWaterStateAndDoFluidPushing();
+                    if (level().isClientSide) {
+                        level().addParticle(Particles.SMOKE, getX(), getY() + 0.5D, getZ(), 0.0D, 0.0D, 0.0D);
+                    }
+                }
             }
-            this.discard();
-            // CraftBukkit end
-        } else {
-            this.updateInWaterStateAndDoFluidPushing();
-            if (this.level().isClientSide) {
-                this.level().addParticle(Particles.SMOKE, this.getX(), this.getY() + 0.5D, this.getZ(), 0.0D, 0.0D, 0.0D);
-            }
-        }
-
+        });
     }
+    EntityTNTPrimed getThis(){return this;}
 
     private void explode() {
-        // CraftBukkit start
-        // float f = 4.0F;
-        ExplosionPrimeEvent event = CraftEventFactory.callExplosionPrimeEvent((org.bukkit.entity.Explosive)this.getBukkitEntity());
+        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                // CraftBukkit start
+                // float f = 4.0F;
+                ExplosionPrimeEvent event = CraftEventFactory.callExplosionPrimeEvent((org.bukkit.entity.Explosive) getBukkitEntity());
 
-        if (!event.isCancelled()) {
-            this.level().explode(this, this.getX(), this.getY(0.0625D), this.getZ(), event.getRadius(), event.getFire(), World.a.TNT);
-        }
-        // CraftBukkit end
+                if (!event.isCancelled()) {
+                    level().explode(getThis(), getX(), getY(0.0625D), getZ(), event.getRadius(), event.getFire(), World.a.TNT);
+                }
+                // CraftBukkit end
+            }
+        });
     }
 
     @Override

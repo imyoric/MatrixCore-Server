@@ -1297,20 +1297,20 @@ public class PlayerConnection implements ServerPlayerConnection, TickablePacketL
                             this.player.onGround = packetplayinflying.isOnGround(); // CraftBukkit - SPIGOT-5810, SPIGOT-5835, SPIGOT-6828: reset by this.player.move
                             double d11 = d7;
 
-                            d6 = d0 - this.player.getX();
+//                            d6 = d0 - this.player.getX();
                             d7 = d1 - this.player.getY();
-                            if (d7 > -0.5D || d7 < 0.5D) {
-                                d7 = 0.0D;
-                            }
+//                            if (d7 > -0.5D || d7 < 0.5D) {
+//                                d7 = 0.0D;
+//                            }
 
-                            d8 = d2 - this.player.getZ();
-                            d10 = d6 * d6 + d7 * d7 + d8 * d8;
+//                            d8 = d2 - this.player.getZ();
+//                            d10 = d6 * d6 + d7 * d7 + d8 * d8;
                             boolean flag2 = false;
 
-                            if (!this.player.isChangingDimension() && d10 > org.spigotmc.SpigotConfig.movedWronglyThreshold && !this.player.isSleeping() && !this.player.gameMode.isCreative() && this.player.gameMode.getGameModeForPlayer() != EnumGamemode.SPECTATOR) { // Spigot
-                                flag2 = true;
-                                PlayerConnection.LOGGER.warn("{} moved wrongly!", this.player.getName().getString());
-                            }
+//                            if (!this.player.isChangingDimension() && d10 > org.spigotmc.SpigotConfig.movedWronglyThreshold && !this.player.isSleeping() && !this.player.gameMode.isCreative() && this.player.gameMode.getGameModeForPlayer() != EnumGamemode.SPECTATOR) { // Spigot
+//                                flag2 = true;
+//                                PlayerConnection.LOGGER.warn("{} moved wrongly!", this.player.getName().getString());
+//                            }
 
                             if (!this.player.noPhysics && !this.player.isSleeping() && (flag2 && worldserver.noCollision(this.player, axisalignedbb) || this.isPlayerCollidingWithAnythingNew(worldserver, axisalignedbb, d0, d1, d2))) {
                                 this.internalTeleport(d3, d4, d5, f, f1, Collections.emptySet()); // CraftBukkit - SPIGOT-1807: Don't call teleport event, when the client thinks the player is falling, because the chunks are not loaded on the client yet.

@@ -655,6 +655,7 @@ public class EntityPlayer extends EntityHuman {
         this.trackEnteredOrExitedLavaOnVehicle();
         this.advancements.flushDirty(this);
     }
+    public EntityPlayer getThis(){return this;}
 
     public void doTick() {
         try {
@@ -662,89 +663,140 @@ public class EntityPlayer extends EntityHuman {
                 super.tick();
             }
 
-            for (int i = 0; i < this.getInventory().getContainerSize(); ++i) {
-                ItemStack itemstack = this.getInventory().getItem(i);
+            Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {//Matrix
+                @Override
+                public void run() {
+                    for (int i = 0; i < getInventory().getContainerSize(); ++i) {
+                        ItemStack itemstack = getInventory().getItem(i);
 
-                if (itemstack.getItem().isComplex()) {
-                    Packet<?> packet = ((ItemWorldMapBase) itemstack.getItem()).getUpdatePacket(itemstack, this.level(), this);
+                        if (itemstack.getItem().isComplex()) {
+                            Packet<?> packet = ((ItemWorldMapBase) itemstack.getItem()).getUpdatePacket(itemstack, level(), getThis());
 
-                    if (packet != null) {
-                        this.connection.send(packet);
+                            if (packet != null) {
+                                connection.send(packet);
+                            }
+                        }
                     }
                 }
-            }
+            });
 
             if (this.getHealth() != this.lastSentHealth || this.lastSentFood != this.foodData.getFoodLevel() || this.foodData.getSaturationLevel() == 0.0F != this.lastFoodSaturationZero) {
-                this.connection.send(new PacketPlayOutUpdateHealth(this.getBukkitEntity().getScaledHealth(), this.foodData.getFoodLevel(), this.foodData.getSaturationLevel())); // CraftBukkit
-                this.lastSentHealth = this.getHealth();
-                this.lastSentFood = this.foodData.getFoodLevel();
-                this.lastFoodSaturationZero = this.foodData.getSaturationLevel() == 0.0F;
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        connection.send(new PacketPlayOutUpdateHealth(getBukkitEntity().getScaledHealth(), foodData.getFoodLevel(), foodData.getSaturationLevel())); // CraftBukkit
+                        lastSentHealth = getHealth();
+                        lastSentFood = foodData.getFoodLevel();
+                        lastFoodSaturationZero = foodData.getSaturationLevel() == 0.0F;
+                    }
+                });
             }
 
             if (this.getHealth() + this.getAbsorptionAmount() != this.lastRecordedHealthAndAbsorption) {
-                this.lastRecordedHealthAndAbsorption = this.getHealth() + this.getAbsorptionAmount();
-                this.updateScoreForCriteria(IScoreboardCriteria.HEALTH, MathHelper.ceil(this.lastRecordedHealthAndAbsorption));
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        lastRecordedHealthAndAbsorption = getHealth() + getAbsorptionAmount();
+                        updateScoreForCriteria(IScoreboardCriteria.HEALTH, MathHelper.ceil(lastRecordedHealthAndAbsorption));
+                    }
+                });
             }
 
-            if (this.foodData.getFoodLevel() != this.lastRecordedFoodLevel) {
-                this.lastRecordedFoodLevel = this.foodData.getFoodLevel();
-                this.updateScoreForCriteria(IScoreboardCriteria.FOOD, MathHelper.ceil((float) this.lastRecordedFoodLevel));
+            if (foodData.getFoodLevel() != lastRecordedFoodLevel) {
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        lastRecordedFoodLevel = foodData.getFoodLevel();
+                        updateScoreForCriteria(IScoreboardCriteria.FOOD, MathHelper.ceil((float) lastRecordedFoodLevel));
+                    }
+                });
             }
 
-            if (this.getAirSupply() != this.lastRecordedAirLevel) {
-                this.lastRecordedAirLevel = this.getAirSupply();
-                this.updateScoreForCriteria(IScoreboardCriteria.AIR, MathHelper.ceil((float) this.lastRecordedAirLevel));
+            if (getAirSupply() != lastRecordedAirLevel) {
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        lastRecordedAirLevel = getAirSupply();
+                        updateScoreForCriteria(IScoreboardCriteria.AIR, MathHelper.ceil((float) lastRecordedAirLevel));
+                    }
+                });
             }
 
-            if (this.getArmorValue() != this.lastRecordedArmor) {
-                this.lastRecordedArmor = this.getArmorValue();
-                this.updateScoreForCriteria(IScoreboardCriteria.ARMOR, MathHelper.ceil((float) this.lastRecordedArmor));
+            if (getArmorValue() != lastRecordedArmor) {
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        lastRecordedArmor = getArmorValue();
+                        updateScoreForCriteria(IScoreboardCriteria.ARMOR, MathHelper.ceil((float) lastRecordedArmor));
+                    }
+                });
             }
 
-            if (this.totalExperience != this.lastRecordedExperience) {
-                this.lastRecordedExperience = this.totalExperience;
-                this.updateScoreForCriteria(IScoreboardCriteria.EXPERIENCE, MathHelper.ceil((float) this.lastRecordedExperience));
+            if (totalExperience != lastRecordedExperience) {
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        lastRecordedExperience = totalExperience;
+                        updateScoreForCriteria(IScoreboardCriteria.EXPERIENCE, MathHelper.ceil((float) lastRecordedExperience));
+                    }
+                });
             }
 
             // CraftBukkit start - Force max health updates
-            if (this.maxHealthCache != this.getMaxHealth()) {
-                this.getBukkitEntity().updateScaledHealth();
+            if (maxHealthCache != getMaxHealth()) {
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        getBukkitEntity().updateScaledHealth();
+                    }
+                });
             }
             // CraftBukkit end
 
-            if (this.experienceLevel != this.lastRecordedLevel) {
-                this.lastRecordedLevel = this.experienceLevel;
-                this.updateScoreForCriteria(IScoreboardCriteria.LEVEL, MathHelper.ceil((float) this.lastRecordedLevel));
+            if (experienceLevel != lastRecordedLevel) {
+
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        lastRecordedLevel = experienceLevel;
+                        updateScoreForCriteria(IScoreboardCriteria.LEVEL, MathHelper.ceil((float) lastRecordedLevel));
+                    }
+                });
             }
 
-            if (this.totalExperience != this.lastSentExp) {
-                this.lastSentExp = this.totalExperience;
-                this.connection.send(new PacketPlayOutExperience(this.experienceProgress, this.totalExperience, this.experienceLevel));
+            if (totalExperience != lastSentExp) {
+                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    @Override
+                    public void run() {
+                        lastSentExp = totalExperience;
+                        connection.send(new PacketPlayOutExperience(experienceProgress, totalExperience, experienceLevel));
+                    }
+                });
             }
 
-            if (this.tickCount % 20 == 0) {
+            if (tickCount % 20 == 0) {
                 CriterionTriggers.LOCATION.trigger(this);
             }
 
             // CraftBukkit start - initialize oldLevel, fire PlayerLevelChangeEvent, and tick client-sided world border
-            if (this.oldLevel == -1) {
-                this.oldLevel = this.experienceLevel;
+            if (oldLevel == -1) {
+                oldLevel = experienceLevel;
             }
 
-            if (this.oldLevel != this.experienceLevel) {
-                CraftEventFactory.callPlayerLevelChangeEvent(this.getBukkitEntity(), this.oldLevel, this.experienceLevel);
-                this.oldLevel = this.experienceLevel;
+            if (oldLevel != experienceLevel) {
+                CraftEventFactory.callPlayerLevelChangeEvent(getBukkitEntity(), oldLevel, experienceLevel);
+                oldLevel = experienceLevel;
             }
 
-            if (this.getBukkitEntity().hasClientWorldBorder()) {
-                ((CraftWorldBorder) this.getBukkitEntity().getWorldBorder()).getHandle().tick();
+            if (getBukkitEntity().hasClientWorldBorder()) {
+                ((CraftWorldBorder) getBukkitEntity().getWorldBorder()).getHandle().tick();
             }
             // CraftBukkit end
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Ticking player");
             CrashReportSystemDetails crashreportsystemdetails = crashreport.addCategory("Player being ticked");
 
-            this.fillCrashReportCategory(crashreportsystemdetails);
+            fillCrashReportCategory(crashreportsystemdetails);
             throw new ReportedException(crashreport);
         }
     }
@@ -790,108 +842,119 @@ public class EntityPlayer extends EntityHuman {
 
     @Override
     public void die(DamageSource damagesource) {
-        this.gameEvent(GameEvent.ENTITY_DIE);
-        boolean flag = this.level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
-        // CraftBukkit start - fire PlayerDeathEvent
-        if (this.isRemoved()) {
-            return;
-        }
-        java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>(this.getInventory().getContainerSize());
-        boolean keepInventory = this.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) || this.isSpectator();
-
-        if (!keepInventory) {
-            for (ItemStack item : this.getInventory().getContents()) {
-                if (!item.isEmpty() && !EnchantmentManager.hasVanishingCurse(item)) {
-                    loot.add(CraftItemStack.asCraftMirror(item));
+        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+            @Override
+            public void run() {
+                gameEvent(GameEvent.ENTITY_DIE);
+                boolean flag = level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
+                // CraftBukkit start - fire PlayerDeathEvent
+                if (isRemoved()) {
+                    return;
                 }
-            }
-        }
-        // SPIGOT-5071: manually add player loot tables (SPIGOT-5195 - ignores keepInventory rule)
-        this.dropFromLootTable(damagesource, this.lastHurtByPlayerTime > 0);
-        for (org.bukkit.inventory.ItemStack item : this.drops) {
-            loot.add(item);
-        }
-        this.drops.clear(); // SPIGOT-5188: make sure to clear
+                java.util.List<org.bukkit.inventory.ItemStack> loot = new java.util.ArrayList<org.bukkit.inventory.ItemStack>(getInventory().getContainerSize());
+                boolean keepInventory = level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) || isSpectator();
 
-        IChatBaseComponent defaultMessage = this.getCombatTracker().getDeathMessage();
+                if (!keepInventory) {
+                    for (ItemStack item : getInventory().getContents()) {
+                        if (!item.isEmpty() && !EnchantmentManager.hasVanishingCurse(item)) {
+                            loot.add(CraftItemStack.asCraftMirror(item));
+                        }
+                    }
+                }
 
-        String deathmessage = defaultMessage.getString();
-        keepLevel = keepInventory; // SPIGOT-2222: pre-set keepLevel
-        org.bukkit.event.entity.PlayerDeathEvent event = CraftEventFactory.callPlayerDeathEvent(this, loot, deathmessage, keepInventory);
+                // SPIGOT-5071: manually add player loot tables (SPIGOT-5195 - ignores keepInventory rule)
+                dropFromLootTable(damagesource, lastHurtByPlayerTime > 0);
+                for (org.bukkit.inventory.ItemStack item : drops) {
+                    loot.add(item);
+                }
 
-        // SPIGOT-943 - only call if they have an inventory open
-        if (this.containerMenu != this.inventoryMenu) {
-            this.closeContainer();
-        }
+                drops.clear(); // SPIGOT-5188: make sure to clear
 
-        String deathMessage = event.getDeathMessage();
+                IChatBaseComponent defaultMessage = getCombatTracker().getDeathMessage();
 
-        if (deathMessage != null && deathMessage.length() > 0 && flag) { // TODO: allow plugins to override?
-            IChatBaseComponent ichatbasecomponent;
-            if (deathMessage.equals(deathmessage)) {
-                ichatbasecomponent = this.getCombatTracker().getDeathMessage();
-            } else {
-                ichatbasecomponent = org.bukkit.craftbukkit.util.CraftChatMessage.fromStringOrNull(deathMessage);
-            }
+                String deathmessage = defaultMessage.getString();
+                keepLevel = keepInventory; // SPIGOT-2222: pre-set keepLevel
 
-            this.connection.send(new ClientboundPlayerCombatKillPacket(this.getId(), ichatbasecomponent), PacketSendListener.exceptionallySend(() -> {
-                boolean flag1 = true;
-                String s = ichatbasecomponent.getString(256);
-                IChatMutableComponent ichatmutablecomponent = IChatBaseComponent.translatable("death.attack.message_too_long", IChatBaseComponent.literal(s).withStyle(EnumChatFormat.YELLOW));
-                IChatMutableComponent ichatmutablecomponent1 = IChatBaseComponent.translatable("death.attack.even_more_magic", this.getDisplayName()).withStyle((chatmodifier) -> {
-                    return chatmodifier.withHoverEvent(new ChatHoverable(ChatHoverable.EnumHoverAction.SHOW_TEXT, ichatmutablecomponent));
+                // SPIGOT-943 - only call if they have an inventory open
+                if (containerMenu != inventoryMenu) {
+                    closeContainer();
+                }
+
+                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {//Matrix
+                    @Override
+                    public void run() {
+                        org.bukkit.event.entity.PlayerDeathEvent event = CraftEventFactory.callPlayerDeathEvent(getThis(), loot, deathmessage, keepInventory);
+                        String deathMessage = event.getDeathMessage();
+
+                        if (deathMessage != null && !deathMessage.isEmpty() && flag) { // TODO: allow plugins to override?
+                            IChatBaseComponent ichatbasecomponent;
+                            if (deathMessage.equals(deathmessage)) {
+                                ichatbasecomponent = getCombatTracker().getDeathMessage();
+                            } else {
+                                ichatbasecomponent = org.bukkit.craftbukkit.util.CraftChatMessage.fromStringOrNull(deathMessage);
+                            }
+
+                            connection.send(new ClientboundPlayerCombatKillPacket(getId(), ichatbasecomponent), PacketSendListener.exceptionallySend(() -> {
+                                String s = ichatbasecomponent.getString(256);
+                                IChatMutableComponent ichatmutablecomponent = IChatBaseComponent.translatable("death.attack.message_too_long", IChatBaseComponent.literal(s).withStyle(EnumChatFormat.YELLOW));
+                                IChatMutableComponent ichatmutablecomponent1 = IChatBaseComponent.translatable("death.attack.even_more_magic", getDisplayName()).withStyle((chatmodifier) -> {
+                                    return chatmodifier.withHoverEvent(new ChatHoverable(ChatHoverable.EnumHoverAction.SHOW_TEXT, ichatmutablecomponent));
+                                });
+
+                                return new ClientboundPlayerCombatKillPacket(getId(), ichatmutablecomponent1);
+                            }));
+                            ScoreboardTeamBase scoreboardteambase = getTeam();
+
+                            if (scoreboardteambase != null && scoreboardteambase.getDeathMessageVisibility() != ScoreboardTeamBase.EnumNameTagVisibility.ALWAYS) {
+                                if (scoreboardteambase.getDeathMessageVisibility() == ScoreboardTeamBase.EnumNameTagVisibility.HIDE_FOR_OTHER_TEAMS) {
+                                    server.getPlayerList().broadcastSystemToTeam(getThis(), ichatbasecomponent);
+                                } else if (scoreboardteambase.getDeathMessageVisibility() == ScoreboardTeamBase.EnumNameTagVisibility.HIDE_FOR_OWN_TEAM) {
+                                    server.getPlayerList().broadcastSystemToAllExceptTeam(getThis(), ichatbasecomponent);
+                                }
+                            } else {
+                                server.getPlayerList().broadcastSystemMessage(ichatbasecomponent, false);
+                            }
+                        } else {
+                            connection.send(new ClientboundPlayerCombatKillPacket(getId(), CommonComponents.EMPTY));
+                        }
+
+                        removeEntitiesOnShoulder();
+                        if (level().getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS)) {
+                            tellNeutralMobsThatIDied();
+                        }
+                        // SPIGOT-5478 must be called manually now
+                        dropExperience();
+                        // we clean the player's inventory after the EntityDeathEvent is called so plugins can get the exact state of the inventory.
+                        if (!event.getKeepInventory()) {
+                            getInventory().clearContent();
+                        }
+
+                        setCamera(getThis()); // Remove spectated target
+                        // CraftBukkit end
+
+                        // CraftBukkit - Get our scores instead
+                        level().getCraftServer().getScoreboardManager().getScoreboardScores(IScoreboardCriteria.DEATH_COUNT, getScoreboardName(), ScoreboardScore::increment);
+                        EntityLiving entityliving = getKillCredit();
+
+                        if (entityliving != null) {
+                            awardStat(StatisticList.ENTITY_KILLED_BY.get(entityliving.getType()));
+                            entityliving.awardKillScore(getThis(), deathScore, damagesource);
+                            createWitherRose(entityliving);
+                        }
+
+                        level().broadcastEntityEvent(getThis(), (byte) 3);
+                        awardStat(StatisticList.DEATHS);
+                        resetStat(StatisticList.CUSTOM.get(StatisticList.TIME_SINCE_DEATH));
+                        resetStat(StatisticList.CUSTOM.get(StatisticList.TIME_SINCE_REST));
+                        clearFire();
+                        setTicksFrozen(0);
+                        setSharedFlagOnFire(false);
+                        getCombatTracker().recheckStatus();
+                        setLastDeathLocation(Optional.of(GlobalPos.of(level().dimension(), blockPosition())));
+                    }
                 });
-
-                return new ClientboundPlayerCombatKillPacket(this.getId(), ichatmutablecomponent1);
-            }));
-            ScoreboardTeamBase scoreboardteambase = this.getTeam();
-
-            if (scoreboardteambase != null && scoreboardteambase.getDeathMessageVisibility() != ScoreboardTeamBase.EnumNameTagVisibility.ALWAYS) {
-                if (scoreboardteambase.getDeathMessageVisibility() == ScoreboardTeamBase.EnumNameTagVisibility.HIDE_FOR_OTHER_TEAMS) {
-                    this.server.getPlayerList().broadcastSystemToTeam(this, ichatbasecomponent);
-                } else if (scoreboardteambase.getDeathMessageVisibility() == ScoreboardTeamBase.EnumNameTagVisibility.HIDE_FOR_OWN_TEAM) {
-                    this.server.getPlayerList().broadcastSystemToAllExceptTeam(this, ichatbasecomponent);
-                }
-            } else {
-                this.server.getPlayerList().broadcastSystemMessage(ichatbasecomponent, false);
             }
-        } else {
-            this.connection.send(new ClientboundPlayerCombatKillPacket(this.getId(), CommonComponents.EMPTY));
-        }
-
-        this.removeEntitiesOnShoulder();
-        if (this.level().getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS)) {
-            this.tellNeutralMobsThatIDied();
-        }
-        // SPIGOT-5478 must be called manually now
-        this.dropExperience();
-        // we clean the player's inventory after the EntityDeathEvent is called so plugins can get the exact state of the inventory.
-        if (!event.getKeepInventory()) {
-            this.getInventory().clearContent();
-        }
-
-        this.setCamera(this); // Remove spectated target
-        // CraftBukkit end
-
-        // CraftBukkit - Get our scores instead
-        this.level().getCraftServer().getScoreboardManager().getScoreboardScores(IScoreboardCriteria.DEATH_COUNT, this.getScoreboardName(), ScoreboardScore::increment);
-        EntityLiving entityliving = this.getKillCredit();
-
-        if (entityliving != null) {
-            this.awardStat(StatisticList.ENTITY_KILLED_BY.get(entityliving.getType()));
-            entityliving.awardKillScore(this, this.deathScore, damagesource);
-            this.createWitherRose(entityliving);
-        }
-
-        this.level().broadcastEntityEvent(this, (byte) 3);
-        this.awardStat(StatisticList.DEATHS);
-        this.resetStat(StatisticList.CUSTOM.get(StatisticList.TIME_SINCE_DEATH));
-        this.resetStat(StatisticList.CUSTOM.get(StatisticList.TIME_SINCE_REST));
-        this.clearFire();
-        this.setTicksFrozen(0);
-        this.setSharedFlagOnFire(false);
-        this.getCombatTracker().recheckStatus();
-        this.setLastDeathLocation(Optional.of(GlobalPos.of(this.level().dimension(), this.blockPosition())));
+        });
     }
 
     private void tellNeutralMobsThatIDied() {
