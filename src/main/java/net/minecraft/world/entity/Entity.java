@@ -166,6 +166,8 @@ public abstract class Entity implements INamableTileEntity, EntityAccess, IComma
         return tag.contains("Bukkit.updateLevel") && tag.getInt("Bukkit.updateLevel") >= level;
     }
 
+    public boolean isExploded = false;
+
     private CraftEntity bukkitEntity;
 
     public CraftEntity getBukkitEntity() {

@@ -958,12 +958,13 @@ public final class CraftServer implements Server {
         List<BukkitWorker> overdueWorkers = getScheduler().getActiveWorkers();
         for (BukkitWorker worker : overdueWorkers) {
             Plugin plugin = worker.getOwner();
-            getLogger().log(Level.SEVERE, String.format(
-                "Nag author(s): '%s' of '%s' about the following: %s",
-                plugin.getDescription().getAuthors(),
-                plugin.getDescription().getFullName(),
-                "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin"
-            ));
+            if(plugin != null)
+                getLogger().log(Level.SEVERE,
+                        String.format("Nag author(s): '%s' of '%s' about the following: %s",
+                                plugin.getDescription().getAuthors(),
+                                plugin.getDescription().getFullName(),
+                                "This plugin is not properly shutting down its async tasks when it is being reloaded.  This may cause conflicts with the newly loaded version of the plugin"
+                        ));
         }
         loadPlugins();
         enablePlugins(PluginLoadOrder.STARTUP);

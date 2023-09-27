@@ -6,6 +6,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import org.bukkit.craftbukkit.SpigotTimings; // Spigot
+import org.jetbrains.annotations.Nullable;
 import org.spigotmc.CustomTimingsHandler; // Spigot
 
 public class CraftTask implements BukkitTask, Runnable { // Spigot
@@ -66,6 +67,7 @@ public class CraftTask implements BukkitTask, Runnable { // Spigot
         return id;
     }
 
+    @Nullable
     @Override
     public final Plugin getOwner() {
         return plugin;

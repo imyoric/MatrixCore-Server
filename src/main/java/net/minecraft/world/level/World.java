@@ -3,9 +3,7 @@ package net.minecraft.world.level;
 import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -39,7 +37,6 @@ import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.boss.EntityComplexPart;
 import net.minecraft.world.entity.boss.enderdragon.EntityEnderDragon;
-import net.minecraft.world.entity.item.EntityTNTPrimed;
 import net.minecraft.world.entity.player.EntityHuman;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingManager;
@@ -74,8 +71,6 @@ import net.minecraft.world.phys.Vec3D;
 import net.minecraft.world.scores.Scoreboard;
 
 // CraftBukkit start
-import java.util.HashMap;
-import java.util.Map;
 import net.minecraft.network.protocol.game.ClientboundSetBorderCenterPacket;
 import net.minecraft.network.protocol.game.ClientboundSetBorderLerpSizePacket;
 import net.minecraft.network.protocol.game.ClientboundSetBorderSizePacket;
@@ -93,10 +88,8 @@ import org.bukkit.craftbukkit.SpigotTimings; // Spigot
 import org.bukkit.craftbukkit.block.CapturedBlockState;
 import org.bukkit.craftbukkit.block.data.CraftBlockData;
 import org.bukkit.craftbukkit.util.CraftSpawnCategory;
-import org.bukkit.craftbukkit.util.CraftNamespacedKey;
 import org.bukkit.entity.SpawnCategory;
 import org.bukkit.event.block.BlockPhysicsEvent;
-import org.bukkit.event.world.GenericGameEvent;
 // CraftBukkit end
 
 public abstract class World implements GeneratorAccess, AutoCloseable {
@@ -165,6 +158,91 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
 
     public CraftWorld getWorld() {
         return this.world;
+    }
+
+    public List<org.bukkit.block.Block> getNearbyBlocks(Location loc, int radius){
+
+        int startpos = radius / 2;
+
+        int x = (int) loc.getX() - startpos;
+        int y = (int) loc.getY() - startpos;
+        int z = (int) loc.getZ() - startpos;
+        List<org.bukkit.block.Block> blocks = new ArrayList<>();
+
+        int whX = 0;
+        int whY = 0;
+        int whZ = 0;
+
+
+        while(whX != radius){
+            while(whY != radius){
+                while(whZ != radius){
+                    System.out.println("add block"+blocks.size());
+                    blocks.add(world.getBlockAt(x,y,z));
+                    whZ++;
+                    z++;
+                }
+                whY++;
+                y++;
+            }
+            whX++;
+            x++;
+        }
+        return blocks;
+    }
+
+
+    public List<org.bukkit.block.Block> getBlocksOnPath(Location start, Location end) {
+        List<org.bukkit.block.Block> blocks = new ArrayList<>();
+        int dx = Math.abs(end.getBlockX() - start.getBlockX());
+        int dy = Math.abs(end.getBlockY() - start.getBlockY());
+        int dz = Math.abs(end.getBlockZ() - start.getBlockZ());
+
+        int max = Math.max(Math.max(dx, dy), dz);
+        double dxStep = (double) dx / max;
+        double dyStep = (double) dy / max;
+        double dzStep = (double) dz / max;
+
+        double x = start.getBlockX();
+        double y = start.getBlockY();
+        double z = start.getBlockZ();
+        boolean thb = true;
+        for (int i = 0; i <= max; i++) {
+            //Для оптимизации
+            if(thb){
+                thb = false;
+                i++;
+            }else thb = true;
+
+            blocks.add(world.getBlockAt((int) Math.round(x), (int) Math.round(y), (int) Math.round(z)));
+//            if (block.getType() != org.bukkit.Material.AIR && block.getType() != Material.WATER && block.getType() != Material.LAVA && !passableBlocks.contains(block.getType())) {
+//                float hrdns = block.getType().getHardness();
+//                if(hrdns < 1) hrdns = 5;
+//                if(hrdns > 100) hrdns = 50;
+//                blockCount[0] += hrdns;
+//                blockCount[0]++;
+//            }
+
+            if (x < end.getBlockX()) {
+                x += dxStep;
+            } else if (x > end.getBlockX()) {
+                x -= dxStep;
+            }
+
+            if (y < end.getBlockY()) {
+                y += dyStep;
+            } else if (y > end.getBlockY()) {
+                y -= dyStep;
+            }
+
+            if (z < end.getBlockZ()) {
+                z += dzStep;
+            } else if (z > end.getBlockZ()) {
+                z -= dzStep;
+            }
+        }
+
+        return blocks;
     }
 
     public CraftServer getCraftServer() {

@@ -1189,18 +1189,13 @@ public abstract class MinecraftServer extends IAsyncTaskHandlerReentrant<TickTas
         }
 
         if (autosavePeriod > 0 && this.tickCount % autosavePeriod == 0) { // CraftBukkit
-            Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
-                @Override
-                public void run() {
-                    SpigotTimings.worldSaveTimer.startTiming(); // Spigot
-                    MinecraftServer.LOGGER.debug("Autosave started");
-                    profiler.push("save");
-                    saveEverything(true, false, false);
-                    profiler.pop();
-                    MinecraftServer.LOGGER.debug("Autosave finished");
-                    SpigotTimings.worldSaveTimer.stopTiming(); // Spigot
-                }
-            });
+            SpigotTimings.worldSaveTimer.startTiming(); // Spigot
+            MinecraftServer.LOGGER.debug("Autosave started");
+            profiler.push("save");
+            saveEverything(true, false, false);
+            profiler.pop();
+            MinecraftServer.LOGGER.debug("Autosave finished");
+            SpigotTimings.worldSaveTimer.stopTiming(); // Spigot
         }
 
         this.profiler.push("tallying");

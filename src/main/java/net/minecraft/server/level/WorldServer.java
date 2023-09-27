@@ -1886,7 +1886,7 @@ public class WorldServer extends World implements GeneratorAccessSeed {
 
     @Override
     public LevelEntityGetter<Entity> getEntities() {
-        org.spigotmc.AsyncCatcher.catchOp("Chunk getEntities call"); // Spigot
+        //org.spigotmc.AsyncCatcher.catchOp("Chunk getEntities call"); // Spigot
         return this.entityManager.getEntityGetter();
     }
 
