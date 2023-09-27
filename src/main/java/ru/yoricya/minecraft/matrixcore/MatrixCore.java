@@ -27,6 +27,7 @@ public class MatrixCore {
         Thread runnedThread;
         Exception exception = null;
         Future<Integer> future;
+
         MatrixAsyncTask(Runnable t, ForkJoinPool ex) {
             Task = t;
             ex.execute(new Runnable() {
