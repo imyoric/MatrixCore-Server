@@ -77,6 +77,7 @@ public class MatrixCore {
             if(CountThreads == -1)
                 Executor = new ForkJoinPool();
             else Executor = new ForkJoinPool(CountThreads);
+            MatrixConfig.saveConfing();
         }
 
         public MatrixAsyncTask addTask(Runnable task){
