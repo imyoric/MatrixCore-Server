@@ -20,14 +20,13 @@ public class MatrixCore {
         MatrixAsyncScheduler.StopMatrix();
         MatrixConfig.saveConfing();
     }
-    
+
     public static class MatrixAsyncTask{
         Runnable Task;
         boolean isRunned = false;
         Thread runnedThread;
         Exception exception = null;
         Future<Integer> future;
-
         MatrixAsyncTask(Runnable t, ForkJoinPool ex) {
             Task = t;
             ex.execute(new Runnable() {
@@ -48,7 +47,7 @@ public class MatrixCore {
         public void RunnedCheck(){
             try {
                 if(!Thread.currentThread().getName().equals("Server thread")) {
-                   //while(future == null) Thread.sleep(8);
+                    //while(future == null) Thread.sleep(8);
                     while (!isRunned) Thread.sleep(8);
                 }
             } catch (InterruptedException e) {
@@ -174,3 +173,4 @@ public class MatrixCore {
         }
     }
 }
+
