@@ -160,35 +160,26 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         return this.world;
     }
 
-    public List<org.bukkit.block.Block> getNearbyBlocks(Location loc, int radius){
+    public List<org.bukkit.block.Block> getNearbyBlocks(Location location, int radius){
+        if (location == null) return new ArrayList<>();
+        List<org.bukkit.block.Block> circleBlocks = new ArrayList<>();
 
-        int startpos = radius / 2;
+        int bx = location.getBlockX();
+        int by = location.getBlockY();
+        int bz = location.getBlockZ();
 
-        int x = (int) loc.getX() - startpos;
-        int y = (int) loc.getY() - startpos;
-        int z = (int) loc.getZ() - startpos;
-        List<org.bukkit.block.Block> blocks = new ArrayList<>();
-
-        int whX = 0;
-        int whY = 0;
-        int whZ = 0;
-
-
-        while(whX != radius){
-            while(whY != radius){
-                while(whZ != radius){
-                    System.out.println("add block"+blocks.size());
-                    blocks.add(world.getBlockAt(x,y,z));
-                    whZ++;
-                    z++;
+        for (int x = bx - radius; x <= bx + radius; x++) {
+            for (int y = by - radius; y <= by + radius; y++) {
+                for (int z = bz - radius; z <= bz + radius; z++) {
+                    double distance = Math.sqrt((bx - x) * (bx - x) + (bz - z) * (bz - z) + (by - y) * (by - y));
+                    if (distance <= radius) {
+                        circleBlocks.add(new Location(location.getWorld(), x, y, z).getBlock());
+                    }
                 }
-                whY++;
-                y++;
             }
-            whX++;
-            x++;
         }
-        return blocks;
+
+        return circleBlocks;
     }
 
 
