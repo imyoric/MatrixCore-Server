@@ -139,69 +139,33 @@ public class Explosion {
     }
     Explosion getThis(){return this;}
 
-    public void explode() {
+    public void explode() { //Edited by MatrixCore
         if(source == null) return;
         if (radius < 0.1F && !source.isExploded) return;
-
+        Location loc = new Location(level.getWorld(), x,y,z);
         MatrixCore.MatrixAsyncTask task = (MatrixCore.MatrixAsyncTask) Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
             @Override
             public void run() {
                 Set<BlockPosition> set = Sets.newHashSet();
-                int i;
-                int j;
-                //List<MatrixCore.MatrixAsyncTask> rchec = new ArrayList<>();
+                List<org.bukkit.block.Block> blocks = level.getNearbyBlocks(loc, (int) (radius + (level.threadSafeRandom.nextFloat()/1.2)));
+                for(org.bukkit.block.Block block : blocks){
+                    BlockPosition blockposition = BlockPosition.containing(block.getX(), block.getY(), block.getZ());
+                    if (!level.isInWorldBounds(blockposition)) break;
 
-                for (int k = 0; k < 16; ++k) {
-                    for (i = 0; i < 16; ++i) {
-                        for (j = 0; j < 16; ++j) {
-                            if (k == 0 || k == 15 || i == 0 || i == 15 || j == 0 || j == 15) {
-                                double d0 = (double) ((float) k / 15.0F * 2.0F - 1.0F);
-                                double d1 = (double) ((float) i / 15.0F * 2.0F - 1.0F);
-                                double d2 = (double) ((float) j / 15.0F * 2.0F - 1.0F);
-                                double d3 = Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
+                    IBlockData iblockdata = level.getBlockState(blockposition);
+                    Fluid fluid = level.getFluidState(blockposition);
 
-                                d0 /= d3;
-                                d1 /= d3;
-                                d2 /= d3;
-                                final float[] f = {radius * (0.7F + level.threadSafeRandom.nextFloat() * 0.6F)};
-                                final double[] d4 = {x};
-                                final double[] d5 = {y};
-                                final double[] d6 = {z};
-                                double finalD = d0;
-                                double finalD1 = d1;
-                                double finalD2 = d2;
-                                for (; f[0] > 0.0F; f[0] -= 0.22500001F) {
-                                    BlockPosition blockposition = BlockPosition.containing(d4[0], d5[0], d6[0]);
-                                    IBlockData iblockdata = level.getBlockState(blockposition);
-                                    Fluid fluid = level.getFluidState(blockposition);
+                    float f = (radius + (level.threadSafeRandom.nextFloat()/1.2f));
 
-                                    if (!level.isInWorldBounds(blockposition)) {
-                                        break;
-                                    }
+                    Optional<Float> optional = damageCalculator.getBlockExplosionResistance(getThis(), level, blockposition, iblockdata, fluid);
 
-                                    Optional<Float> optional = damageCalculator.getBlockExplosionResistance(getThis(), level, blockposition, iblockdata, fluid);
-
-                                    if (optional.isPresent()) {
-                                        f[0] -= ((Float) optional.get() + 0.3F) * 0.3F;
-                                    }
-
-                                    if (f[0] > 0.0F && damageCalculator.shouldBlockExplode(getThis(), level, blockposition, iblockdata, f[0])) {
-                                        set.add(blockposition);
-                                    }
-
-                                    d4[0] += finalD * 0.30000001192092896D;
-                                    d5[0] += finalD1 * 0.30000001192092896D;
-                                    d6[0] += finalD2 * 0.30000001192092896D;
-                                }
-                            }
-                        }
-                    }
+                    if (optional.isPresent()) f -= ((Float) optional.get() + 0.3F) * 0.3F;
+                    if (f > 0.0F && damageCalculator.shouldBlockExplode(getThis(), level, blockposition, iblockdata, f)) set.add(blockposition);
                 }
                 toBlow.addAll(set);
             }
         });
 
-        Location loc = new Location(level.getWorld(), x,y,z);
         source.isExploded = true;
         Vec3D vec3d = new Vec3D(x, y, z);
         level.gameEvent(source, GameEvent.EXPLODE, vec3d);
