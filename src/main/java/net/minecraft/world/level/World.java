@@ -160,6 +160,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         return this.world;
     }
 
+    //Matrix Method
     public List<org.bukkit.block.Block> getNearbyBlocks(Location location, int radius){
         if (location == null) return new ArrayList<>();
         List<org.bukkit.block.Block> circleBlocks = new ArrayList<>();
@@ -178,11 +179,10 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
                 }
             }
         }
-
         return circleBlocks;
     }
 
-
+    //Matrix Method
     public List<org.bukkit.block.Block> getBlocksOnPath(Location start, Location end) {
         List<org.bukkit.block.Block> blocks = new ArrayList<>();
         int dx = Math.abs(end.getBlockX() - start.getBlockX());
@@ -199,20 +199,7 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         double z = start.getBlockZ();
         boolean thb = true;
         for (int i = 0; i <= max; i++) {
-            //Для оптимизации
-            if(thb){
-                thb = false;
-                i++;
-            }else thb = true;
-
             blocks.add(world.getBlockAt((int) Math.round(x), (int) Math.round(y), (int) Math.round(z)));
-//            if (block.getType() != org.bukkit.Material.AIR && block.getType() != Material.WATER && block.getType() != Material.LAVA && !passableBlocks.contains(block.getType())) {
-//                float hrdns = block.getType().getHardness();
-//                if(hrdns < 1) hrdns = 5;
-//                if(hrdns > 100) hrdns = 50;
-//                blockCount[0] += hrdns;
-//                blockCount[0]++;
-//            }
 
             if (x < end.getBlockX()) {
                 x += dxStep;
