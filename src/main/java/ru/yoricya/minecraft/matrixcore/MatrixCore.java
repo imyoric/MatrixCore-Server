@@ -23,42 +23,46 @@ public class MatrixCore {
 
     public static class MatrixAsyncTask{
         Runnable Task;
+        private final Object lockableObj = new Object();
         boolean isRunned = false;
         Thread runnedThread;
         Exception exception = null;
-        Future<Integer> future;
         MatrixAsyncTask(Runnable t, ForkJoinPool ex) {
             Task = t;
             ex.execute(new Runnable() {
                 @Override
                 public void run() {
-                    runnedThread = Thread.currentThread();
+                    //runnedThread = Thread.currentThread();
                     try {
                         t.run();
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         exception = e;
                         e.printStackTrace();
                     }
                     isRunned = true;
+                    synchronized (lockableObj) {
+                        lockableObj.notifyAll();
+                    }
                 }
             });
         }
 
-        public void RunnedCheck(){
-            try {
-                if(!Thread.currentThread().getName().equals("Server thread")) {
-                    //while(future == null) Thread.sleep(8);
-                    while (!isRunned) Thread.sleep(8);
+        public void RunnedCheck() {
+            if (!Thread.currentThread().getName().equals("Server thread"))
+                synchronized (lockableObj) {
+                    try {
+                        while (!isRunned) lockableObj.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
         }
         public void RunnedCheck(boolean skipServerThreadCheck){
             if(skipServerThreadCheck)
                 try {
-                    //while(future == null) Thread.sleep(8);
-                    while (!isRunned) Thread.sleep(8);
+                    synchronized (lockableObj) {
+                        while (!isRunned) lockableObj.wait();
+                    }
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
