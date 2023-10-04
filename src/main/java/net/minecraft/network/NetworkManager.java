@@ -453,9 +453,7 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
 
     public void handleDisconnection() {
         if (this.channel != null && !this.channel.isOpen()) {
-            if (this.disconnectionHandled) {
-                NetworkManager.LOGGER.warn("handleDisconnection() called twice");
-            } else {
+            if (!this.disconnectionHandled) {
                 this.disconnectionHandled = true;
                 if (this.getDisconnectedReason() != null) {
                     this.getPacketListener().onDisconnect(this.getDisconnectedReason());
@@ -464,7 +462,6 @@ public class NetworkManager extends SimpleChannelInboundHandler<Packet<?>> {
                 }
                 this.queue.clear(); // Free up packet queue.
             }
-
         }
     }
 

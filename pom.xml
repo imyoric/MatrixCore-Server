@@ -181,12 +181,19 @@
             <version>5.12.1</version>
             <scope>compile</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/net.sf.jopt-simple/jopt-simple -->
         <dependency>
             <groupId>net.sf.jopt-simple</groupId>
             <artifactId>jopt-simple</artifactId>
             <version>5.0.4</version>
-            <scope>compile</scope>
         </dependency>
+
+        <!--        <dependency>-->
+<!--            <groupId>net.sf.jopt-simple</groupId>-->
+<!--            <artifactId>jopt-simple</artifactId>-->
+<!--            <version>5.0.4</version>-->
+<!--            <scope>compile</scope>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>

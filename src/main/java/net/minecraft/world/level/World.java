@@ -118,8 +118,8 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
     public float rainLevel;
     protected float oThunderLevel;
     public float thunderLevel;
-    public final RandomSource random = RandomSource.create();
-    /** @deprecated */
+    public final RandomSource random = RandomSource.createThreadSafe();
+
     @Deprecated
     public final RandomSource threadSafeRandom = RandomSource.createThreadSafe();
     private final ResourceKey<DimensionManager> dimensionTypeId;
@@ -197,7 +197,6 @@ public abstract class World implements GeneratorAccess, AutoCloseable {
         double x = start.getBlockX();
         double y = start.getBlockY();
         double z = start.getBlockZ();
-        boolean thb = true;
         for (int i = 0; i <= max; i++) {
             blocks.add(world.getBlockAt((int) Math.round(x), (int) Math.round(y), (int) Math.round(z)));
 

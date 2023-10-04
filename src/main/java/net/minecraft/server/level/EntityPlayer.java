@@ -185,6 +185,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.MainHand;
+import ru.yoricya.minecraft.matrixcore.MatrixCore;
 // CraftBukkit end
 
 public class EntityPlayer extends EntityHuman {
@@ -663,7 +664,7 @@ public class EntityPlayer extends EntityHuman {
                 super.tick();
             }
 
-            Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {//Matrix
+            MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {//Matrix
                 @Override
                 public void run() {
                     for (int i = 0; i < getInventory().getContainerSize(); ++i) {
@@ -681,7 +682,7 @@ public class EntityPlayer extends EntityHuman {
             });
 
             if (this.getHealth() != this.lastSentHealth || this.lastSentFood != this.foodData.getFoodLevel() || this.foodData.getSaturationLevel() == 0.0F != this.lastFoodSaturationZero) {
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         connection.send(new PacketPlayOutUpdateHealth(getBukkitEntity().getScaledHealth(), foodData.getFoodLevel(), foodData.getSaturationLevel())); // CraftBukkit
@@ -693,7 +694,7 @@ public class EntityPlayer extends EntityHuman {
             }
 
             if (this.getHealth() + this.getAbsorptionAmount() != this.lastRecordedHealthAndAbsorption) {
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         lastRecordedHealthAndAbsorption = getHealth() + getAbsorptionAmount();
@@ -703,7 +704,7 @@ public class EntityPlayer extends EntityHuman {
             }
 
             if (foodData.getFoodLevel() != lastRecordedFoodLevel) {
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         lastRecordedFoodLevel = foodData.getFoodLevel();
@@ -713,7 +714,7 @@ public class EntityPlayer extends EntityHuman {
             }
 
             if (getAirSupply() != lastRecordedAirLevel) {
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         lastRecordedAirLevel = getAirSupply();
@@ -723,7 +724,7 @@ public class EntityPlayer extends EntityHuman {
             }
 
             if (getArmorValue() != lastRecordedArmor) {
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         lastRecordedArmor = getArmorValue();
@@ -733,7 +734,7 @@ public class EntityPlayer extends EntityHuman {
             }
 
             if (totalExperience != lastRecordedExperience) {
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         lastRecordedExperience = totalExperience;
@@ -744,7 +745,7 @@ public class EntityPlayer extends EntityHuman {
 
             // CraftBukkit start - Force max health updates
             if (maxHealthCache != getMaxHealth()) {
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         getBukkitEntity().updateScaledHealth();
@@ -755,7 +756,7 @@ public class EntityPlayer extends EntityHuman {
 
             if (experienceLevel != lastRecordedLevel) {
 
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         lastRecordedLevel = experienceLevel;
@@ -765,7 +766,7 @@ public class EntityPlayer extends EntityHuman {
             }
 
             if (totalExperience != lastSentExp) {
-                Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                     @Override
                     public void run() {
                         lastSentExp = totalExperience;
@@ -842,7 +843,7 @@ public class EntityPlayer extends EntityHuman {
 
     @Override
     public void die(DamageSource damagesource) {
-        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+        MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
             @Override
             public void run() {
                 gameEvent(GameEvent.ENTITY_DIE);
@@ -880,7 +881,7 @@ public class EntityPlayer extends EntityHuman {
                     closeContainer();
                 }
 
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {//Matrix
+                MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {//Matrix
                     @Override
                     public void run() {
                         org.bukkit.event.entity.PlayerDeathEvent event = CraftEventFactory.callPlayerDeathEvent(getThis(), loot, deathmessage, keepInventory);

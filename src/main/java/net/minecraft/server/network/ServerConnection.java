@@ -47,6 +47,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.LazyInitVar;
 import org.bukkit.Bukkit;
 import org.slf4j.Logger;
+import ru.yoricya.minecraft.matrixcore.MatrixCore;
 
 public class ServerConnection {
 
@@ -170,11 +171,11 @@ public class ServerConnection {
 
             if (!networkmanager.isConnecting()) {
                 if (networkmanager.isConnected()) {
-                    Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+                    MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                                     @Override
                                     public void run() {
                                         networkmanager.tick();

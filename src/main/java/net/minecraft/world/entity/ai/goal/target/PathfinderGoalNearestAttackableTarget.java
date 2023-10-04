@@ -11,6 +11,8 @@ import net.minecraft.world.entity.ai.targeting.PathfinderTargetCondition;
 import net.minecraft.world.entity.player.EntityHuman;
 import net.minecraft.world.phys.AxisAlignedBB;
 import org.bukkit.Bukkit;
+import org.joml.Matrix2d;
+import ru.yoricya.minecraft.matrixcore.MatrixCore;
 
 public class PathfinderGoalNearestAttackableTarget<T extends EntityLiving> extends PathfinderGoalTarget {
 
@@ -56,7 +58,7 @@ public class PathfinderGoalNearestAttackableTarget<T extends EntityLiving> exten
     }
 
     protected void findTarget() {
-        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+        MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
             @Override
             public void run() {
                 if (targetType != EntityHuman.class && targetType != EntityPlayer.class) {

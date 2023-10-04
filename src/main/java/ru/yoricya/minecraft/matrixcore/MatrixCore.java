@@ -1,5 +1,6 @@
 package ru.yoricya.minecraft.matrixcore;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -87,7 +88,9 @@ public class MatrixCore {
         public MatrixAsyncTask addTask(Runnable task){
             return addTask(task, -1);
         }
-
+        public void addSyncTask(Runnable task){
+            Bukkit.getScheduler().runTaskWithMatrix(task);
+        }
         public MatrixAsyncTask addTask(Runnable task, long ms){
             if(ms < 1000)
                 return new MatrixAsyncTask(task, Executor);

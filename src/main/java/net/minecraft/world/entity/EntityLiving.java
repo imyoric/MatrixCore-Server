@@ -145,6 +145,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 // CraftBukkit end
 
 import org.bukkit.craftbukkit.SpigotTimings; // Spigot
+import ru.yoricya.minecraft.matrixcore.MatrixCore;
 
 public abstract class EntityLiving extends Entity implements Attackable {
 
@@ -377,7 +378,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
             // CraftBukkit end
         }
 
-        Bukkit.getScheduler().runTaskWithMatrix(() -> super.checkFallDamage(d0, flag, iblockdata, blockposition));
+        MatrixCore.MatrixAsyncScheduler.addSyncTask(() -> super.checkFallDamage(d0, flag, iblockdata, blockposition));
 
         if (flag) {
             this.lastClimbablePos = Optional.empty();
@@ -2839,7 +2840,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
     @Override
     public void tick() {
         SpigotTimings.timerEntityBaseTick.startTiming(); // Spigot
-        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+        MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
             @Override
             public void run() {
                 if (!level().isClientSide) {
@@ -2869,21 +2870,21 @@ public abstract class EntityLiving extends Entity implements Attackable {
 
                     detectEquipmentUpdates();
 
-                    if (tickCount % 20 == 0) Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    if (tickCount % 20 == 0) MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                         @Override
                         public void run() {
                             getCombatTracker().recheckStatus();
                         }
                     });
 
-                    if (isSleeping() && !checkBedExists()) Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    if (isSleeping() && !checkBedExists()) MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                         @Override
                         public void run() {
                             stopSleeping();
                         }
                     });
                 }
-                if (!isRemoved()) Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                if (!isRemoved()) MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         SpigotTimings.timerEntityBaseTick.stopTiming(); // Spigot
@@ -2970,7 +2971,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                 }
 
                 if (isSleeping()) setXRot(0.0F);
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         SpigotTimings.timerEntityTickRest.stopTiming(); // Spigot
@@ -2989,7 +2990,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
         if (map != null) {
             this.handleHandSwap(map);
             if (!map.isEmpty()) {
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         handleEquipmentChanges(map);
@@ -3115,7 +3116,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
     }
 
     public void aiStep() {
-        Bukkit.getScheduler().runAsyncTaskWithMatrix(new Runnable() {
+        MatrixCore.MatrixAsyncScheduler.addTask(new Runnable() {
             @Override
             public void run() {
                 if (noJumpDelay > 0) {
@@ -3139,7 +3140,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                     setPos(d0, d1, d2);
                     setRot(getYRot(), getXRot());
                 } else if (!isEffectiveAi()) {
-                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                         @Override
                         public void run() {
                             setDeltaMovement(getDeltaMovement().scale(0.98D));
@@ -3171,7 +3172,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                 double finalD = d4;
                 double finalD1 = d5;
                 double finalD2 = d6;
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         setDeltaMovement(finalD, finalD1, finalD2);
@@ -3185,7 +3186,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                     xxa = 0.0F;
                     zza = 0.0F;
                 } else if (isEffectiveAi()) {
-                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                         @Override
                         public void run() {
                             level().getProfiler().push("newAi");
@@ -3194,7 +3195,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                         }
                     });
                 }
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         SpigotTimings.timerEntityAI.stopTiming(); // Spigot
@@ -3216,21 +3217,21 @@ public abstract class EntityLiving extends Entity implements Attackable {
                     double d8 = getFluidJumpThreshold();
 
                     if (flag && (!onGround() || d7 > d8)) {
-                        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                             @Override
                             public void run() {
                                 jumpInLiquid(TagsFluid.WATER);
                             }
                         });
                     } else if (isInLava() && (!onGround() || d7 > d8)) {
-                        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                             @Override
                             public void run() {
                                 jumpInLiquid(TagsFluid.LAVA);
                             }
                         });
                     } else if ((onGround() || flag && d7 <= d8) && noJumpDelay == 0) {
-                        Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                        MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                             @Override
                             public void run() {
                                 jumpFromGround();
@@ -3241,7 +3242,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                 } else {
                     noJumpDelay = 0;
                 }
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         level().getProfiler().pop();
@@ -3252,7 +3253,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
 
                 xxa *= 0.98F;
                 zza *= 0.98F;
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         updateFallFlying();
@@ -3262,7 +3263,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                 Vec3D vec3d1 = new Vec3D((double) xxa, (double) yya, (double) zza);
 
                 if (hasEffect(MobEffects.SLOW_FALLING) || hasEffect(MobEffects.LEVITATION)) {
-                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                         @Override
                         public void run() {
                             resetFallDistance();
@@ -3270,7 +3271,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                     });
                 }
 
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         SpigotTimings.timerEntityAIMove.startTiming(); // Spigot
@@ -3285,7 +3286,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                         EntityHuman entityhuman = (EntityHuman) entityliving;
 
                         if (isAlive()) {
-                            Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                            MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                                 @Override
                                 public void run() {
                                     travelRidden(entityhuman, vec3d1);
@@ -3294,14 +3295,14 @@ public abstract class EntityLiving extends Entity implements Attackable {
                             break label104;
                         }
                     }
-                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                         @Override
                         public void run() {
                             travel(vec3d1);
                         }
                     });
                 }
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         SpigotTimings.timerEntityAIMove.stopTiming(); // Spigot
@@ -3313,7 +3314,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                 if (!level().isClientSide && !isDeadOrDying()) {
                     int i = getTicksFrozen();
 
-                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                         @Override
                         public void run() {
                             if (isInPowderSnow && canFreeze()) {
@@ -3324,7 +3325,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                         }
                     });
                 }
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         removeFrost();
@@ -3333,13 +3334,13 @@ public abstract class EntityLiving extends Entity implements Attackable {
                 });
 
                 if (!level().isClientSide && tickCount % 40 == 0 && isFullyFrozen() && canFreeze())
-                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                    MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         hurt(damageSources().freeze(), 1.0F);
                     }
                 });
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         level().getProfiler().pop();
@@ -3352,7 +3353,7 @@ public abstract class EntityLiving extends Entity implements Attackable {
                     checkAutoSpinAttack(axisalignedbb, getBoundingBox());
                 }
 
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         SpigotTimings.timerEntityAICollision.startTiming(); // Spigot
@@ -3361,20 +3362,20 @@ public abstract class EntityLiving extends Entity implements Attackable {
                     }
                 });
 
-                Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
+                MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
                     @Override
                     public void run() {
                         level().getProfiler().pop();
                     }
                 });
 
-                if (!level().isClientSide && isSensitiveToWater() && isInWaterRainOrBubble())
-                    Bukkit.getScheduler().runTaskWithMatrix(new Runnable() {
-                    @Override
-                    public void run() {
-                        hurt(damageSources().drown(), 1.0F);
-                    }
-                });
+                if (!level().isClientSide)
+                    MatrixCore.MatrixAsyncScheduler.addSyncTask(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(isSensitiveToWater() && isInWaterRainOrBubble()) hurt(damageSources().drown(), 1.0F);
+                        }
+                    });
             }
         });
     }
